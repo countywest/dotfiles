@@ -190,8 +190,8 @@
 
   # [@] RYG prompt symbol (>>>) if the last command succeeded,
   # or RYR if the last command failed.
-  local    PROMPT_NORMAL_OK='%B%F{red}❯%F{yellow}❯%F{green}❯%f%b'
-  local PROMPT_NORMAL_ERROR='%B%F{red}❯%F{yellow}❯%F{red}❯%f%b'
+  local    PROMPT_NORMAL_OK='%(?.%F{white}.%F{red})$'
+  local PROMPT_NORMAL_ERROR='$(?.$F{white}.%F{red})$'
   local    PROMPT_VIMODE_OK='%B%F{green}❮%F{yellow}❮%F{red}❮%f%b'
   local PROMPT_VIMODE_ERROR='%B%F{red}❮%F{yellow}❮%F{red}❮%f%b'
 
@@ -220,7 +220,7 @@
 
   ##################################[ dir: current directory ]##################################
   # [@] Current directory: a red-ish color
-  local DIR_FOREGROUND_COLOR=orangered1             # 202
+  local DIR_FOREGROUND_COLOR=white
   local DIR_SHORTENED_FOREGROUND_COLOR=130
   typeset -g POWERLEVEL9K_DIR_FOREGROUND=$DIR_FOREGROUND_COLOR
   # If directory is too long, shorten some of its segments to the shortest possible unique
@@ -293,7 +293,7 @@
 
   # The default icon shown next to non-writable directories when POWERLEVEL9K_DIR_SHOW_WRITABLE is
   # set to v2.
-  # typeset -g POWERLEVEL9K_LOCK_ICON='⭐'
+  typeset -g POWERLEVEL9K_LOCK_ICON='⭐'
 
   # POWERLEVEL9K_DIR_CLASSES allows you to specify custom icons and colors for different
   # directories. It must be an array with 3 * N elements. Each triplet consists of:
@@ -837,7 +837,7 @@
   # Default context color (no privileges, no SSH).
   typeset -g POWERLEVEL9K_CONTEXT_FOREGROUND=180
 
-  local CONTEXT_TEMPLATE="%B%F{yellow}%n%f%b%F{242}@%B%F{${PROMPT_HOST_COLOR:-cyan}}%m%f%b"
+  local CONTEXT_TEMPLATE="%B%F{6}%n%f%b%F{242}@%B%F{12}%m%f%b"
   # Context format when running with privileges: bold user@hostname.
   typeset -g POWERLEVEL9K_CONTEXT_ROOT_TEMPLATE='%B%n@%m'
   # [@] Context format when in SSH without privileges: user@hostname.
