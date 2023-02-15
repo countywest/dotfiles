@@ -405,7 +405,11 @@
     # Otherwise show the first 12 … the last 12.
     # Tip: To always show local branch name in full without truncation, delete the next line.
     (( $#where > 32 )) && where[13,-13]="…"
-    res+="${clean}${where//\%/%%}"  # escape %
+    if [[ $(git status --porcelain) ]]; then
+      res+="${modified}${where//\%/%%}"  # escape %
+    else
+      res+="${clean}${where//\%/%%}"  # escape %
+    fi
 
     # Display the current Git commit if there is no branch or tag.
     # Tip: To always display the current Git commit, remove `[[ -z $where ]] &&` from the next line.
