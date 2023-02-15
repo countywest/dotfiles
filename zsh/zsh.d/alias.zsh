@@ -477,4 +477,8 @@ if (( ! $+commands[tb] )); then
     alias tb='python -m tbtools.tb'
 fi
 
-# }}}
+# git add modified files only (not add untracked files)
+alias gam='git ls-files --modified | xargs git add'
+
+# show git graph
+alias git_graph='git log --oneline --graph --decorate --all'
