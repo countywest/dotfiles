@@ -191,7 +191,7 @@
   # [@] RYG prompt symbol (>>>) if the last command succeeded,
   # or RYR if the last command failed.
   local    PROMPT_NORMAL_OK='%(?.%F{white}.%F{red})$'
-  local PROMPT_NORMAL_ERROR='$(?.$F{white}.%F{red})$'
+  local PROMPT_NORMAL_ERROR='%(?.$F{white}.%F{red})$'
   local    PROMPT_VIMODE_OK='%B%F{green}❮%F{yellow}❮%F{red}❮%f%b'
   local PROMPT_VIMODE_ERROR='%B%F{red}❮%F{yellow}❮%F{red}❮%f%b'
 
