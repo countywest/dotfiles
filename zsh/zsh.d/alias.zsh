@@ -482,3 +482,10 @@ alias gam='git ls-files --modified | xargs git add'
 
 # show git graph
 alias git_graph='git log --oneline --graph --decorate --all'
+
+# number of files of current directory
+alias numfiles='find . -type f | wc -l'
+
+function tree {
+    find "$1" -print | sed -e "s;[^/]*/;|____;g;s;____|; |;g"
+}
