@@ -183,9 +183,12 @@ fi
 for config_file (${ZDOTDIR:-$HOME}/.zsh/zsh.d/*.zsh(N)) source $config_file
 
 # Terminal
-# Use xterm-256color (for tmux, too)
-if [[ $TERM != "xterm-kitty" ]]; then
-  export TERM="xterm-256color"
+if [[ $TMUX == "" ]]; then
+    # outside tmux
+    export TERM="xterm-256color" # Use xterm-256color
+else
+    # inside tmux
+    export TERM="screen-256color" # Use screen-256color for enabling home/end key inside neovim
 fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
