@@ -275,6 +275,9 @@ export LD_LIBRARY_PATH=/usr/local/cuda/lib64/:${LD_LIBRARY_PATH}
 # conda
 export PATH=${PATH}:~/anaconda3/bin
 
+# mamba
+export PATH=${PATH}:~/mambaforge/bin
+
 # xmodmap loading
 if command -v xmodmap &> /dev/null
 then
