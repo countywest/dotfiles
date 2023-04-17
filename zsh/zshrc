@@ -155,9 +155,7 @@ if [ ! $? -eq 0 ] ; then   # error, refresh the script and try again
     source $ANTIDOTE_BUNDLE
 fi
 
-if [[ -n "$_ANTIDOTE_SAVING" ]]; then
-    fast-theme "XDG:wook"
-fi
+fast-theme "~/.config/fsh/wook.ini" -q
 
 # }}} ===================
 
