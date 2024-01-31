@@ -6,29 +6,8 @@ Dotfiles
 Installation
 ------------
 
-### 👉 One-liner (if you trust me):
-
 ```bash
-curl -fsSL https://dotfiles.wook.kr/etc/install | bash
-```
-
-<details><summary>
-💡 (Tip) You only need to remember <code>curl dotfiles.wook.kr</code> (Click to expand)
-</summary></p>
-
-* Every file is accessible through `dotfiles.wook.kr` (via `curl -L` or `wget`), e.g.,
-  * https://dotfiles.wook.kr/vimrc
-  * https://dotfiles.wook.kr/vimrc?raw=true
-  * https://dotfiles.wook.kr/bin/tb
-
-<p></details>
-
-<details><summary>
-🤔 Want to manually clone and install? (Click to expand)
-</summary><p>
-
-```bash
-$ git clone --recursive https://github.com/wookayin/dotfiles.git ~/.dotfiles
+$ git clone --recursive https://github.com/countywest/dotfiles.git ~/.dotfiles
 $ cd ~/.dotfiles && python install.py
 ```
 
@@ -36,8 +15,6 @@ $ cd ~/.dotfiles && python install.py
 Note: The option `-j8` (`--jobs 8`) works with Git >= 2.8 (parallel submodule fetching).
 For older versions of Git, try without `-j` option.
 -->
-
-</p></details>
 
 <br>
 
@@ -90,7 +67,9 @@ $ dotfiles install ripgrep        # -> ~/.local/bin/rg
 * [Powerline symbols](https://github.com/powerline/powerline#screenshots) are not displayed properly? Do you see some weird letters like `⍰` due to missing fonts?
   Install [Powerline fonts](https://github.com/powerline/fonts) or
   [Nerd fonts](https://github.com/ryanoasis/nerd-fonts).
-    * Mac users can do: `brew search nerd-font`
+    * Mac users can do: manually install powerline fonts from https://github.com/powerline/fonts or `brew search nerd-font`
+      * Profiles > Open Profiles > Select Profile > Edit Profiles > Profiles > Text > change Font to [Noto Mono for Powerline]
+    * Ubuntu: Terminal > Preferences > change Font to ```Ubuntu Mono Regular```
 * Does vim color look weird (e.g. only black-and-white)?
   * Check whether your terminal emulator supports [24-bit color](https://github.com/wookayin/dotfiles/pull/9). Use iTerm2 or kitty rather than built-in Terminal.
   * Mosh (1.3.x) does not support 24-bit colors yet.
