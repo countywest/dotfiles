@@ -133,7 +133,7 @@ function _antidote_compile_bundles() {
 
   bundles+=('zsh-users/zsh-autosuggestions')
   if (( $+commands[virtualenvwrapper_lazy.sh] || $+commands[conda] )); then
-    # Use my own fork for a while, to support autoswitch into anaconda envs
+    # Use my own fork for a while, to support autoswitch into conda envs
     bundles+=('wookayin/zsh-autoswitch-virtualenv')
   fi
   if [[ "`uname`" == "Darwin" ]]; then
@@ -209,7 +209,7 @@ if (( $+commands[iterm-tab-color] )); then
     iterm_tab_color_auto
 fi
 
-# Anaconda3
+# conda
 # see ~/.zshenv for $CONDA_EXE detection
 function _conda_initialize() {
 # >>> conda initialize >>>
@@ -270,11 +270,8 @@ bindkey -M isearch . self-insert
 export PATH=/usr/local/cuda/bin:${PATH}
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64/:${LD_LIBRARY_PATH}
 
-# conda
-export PATH=${PATH}:~/anaconda3/bin
-
-# mamba
-export PATH=${PATH}:~/mambaforge/bin
+# conda & mamba
+export PATH=${PATH}:~/miniforge3/bin
 
 # xmodmap loading
 if command -v xmodmap &> /dev/null
