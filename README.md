@@ -70,6 +70,7 @@ $ dotfiles install ripgrep        # -> ~/.local/bin/rg
     * Mac users can do: manually install powerline fonts from https://github.com/powerline/fonts or `brew search nerd-font`
       * Profiles > Open Profiles > Select Profile > Edit Profiles > Profiles > Text > change Font to [Noto Mono for Powerline]
     * Ubuntu: Terminal > Preferences > change Font to ```Ubuntu Mono Regular```
+* Mouse drag selection and copy (right-click or `y` key) in tmux requires `xclip` on Linux: `sudo apt install xclip`
 * Does vim color look weird (e.g. only black-and-white)?
   * Check whether your terminal emulator supports [24-bit color](https://github.com/wookayin/dotfiles/pull/9). Use iTerm2 or kitty rather than built-in Terminal.
   * Mosh (1.3.x) does not support 24-bit colors yet.
