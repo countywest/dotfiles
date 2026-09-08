@@ -31,12 +31,22 @@ local function notify_later(msg)
   end)
 end
 
--- Use python3 as per $PATH as the host python for neovim.
-if vim.fn.executable("python3") > 0 then
-  vim.g.python3_host_prog = system("which python3")
-else
+-- Use python3 as per $PATH as the host python for neovim...
+if vim.fn.executable("python3") == 0 then
   warning "ERROR: You don't have python3 on your $PATH. Check $PATH or $SHELL. Most features are disabled."
   return
+end
+vim.g.python3_host_prog = system("which python3")
+-- ...unless it lacks pynvim and the conda base python (see $CONDA_EXE from ~/.zshenv) has it:
+-- e.g. Debian/Ubuntu's system python3 ships without pip, so pynvim cannot even be auto-installed there.
+local function has_pynvim(py)
+  return tonumber(system(py .. " -c 'import pynvim; print(pynvim.VERSION.minor)' 2>/dev/null")) ~= nil
+end
+if not has_pynvim(vim.g.python3_host_prog) and vim.env.CONDA_EXE then
+  local conda_python = vim.fn.fnamemodify(vim.env.CONDA_EXE, ':h') .. '/python3'
+  if vim.fn.executable(conda_python) == 1 and has_pynvim(conda_python) then
+    vim.g.python3_host_prog = conda_python
+  end
 end
 
 -- Automatically install pynvim on startup
@@ -91,8 +101,6 @@ if not autoinstall_pynvim() then
   -- Disable the provider outright: plugins then see has('python3') == 0 and skip quietly,
   -- instead of each one tripping the same "Failed to load python3 host" stack trace.
   vim.g.loaded_python3_provider = 0
-  -- ...and the rplugin manifest, which would still try to bootstrap python3 remote plugins (wilder, semshi, ...)
-  vim.g.loaded_remote_plugins = 1
   return
 end
 

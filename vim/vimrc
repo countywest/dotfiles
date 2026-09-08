@@ -2518,6 +2518,7 @@ EOF
 endfunction
 
 function! s:check_wilder_rplugins() abort
+  if !has('python3') | return | endif   " no python3 provider: rplugins cannot load anyway
   " Note that rplugin functions are defined only after its first invocation,
   " so we first force loading it even before wilder initialization is complete.
   doautocmd FuncUndefined _wilder_init
