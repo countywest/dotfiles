@@ -169,7 +169,7 @@ endif
 if has('nvim')
   " Some lua-powered plugins for UI
   Plug 'nvim-lua/plenary.nvim'
-  Plug 'norcalli/nvim-colorizer.lua'
+  Plug 'catgoose/nvim-colorizer.lua'      " maintained fork of norcalli/nvim-colorizer.lua (same module)
   Plug 'nvim-neo-tree/neo-tree.nvim', {'branch': 'main'}
   Plug 'MunifTanjim/nui.nvim'
   Plug 'stevearc/dressing.nvim'
@@ -185,7 +185,9 @@ if has('nvim')
     endif
   endfunction
 
-  let g:_plug_ts_config = {'do': function('TSUpdate')}
+  " Pin to the frozen 'master' branch: the 'main' rewrite (2025) dropped configs/define_modules/query,
+  " which playground, nvim-gps and lua/config/treesitter.lua all depend on.
+  let g:_plug_ts_config = {'do': function('TSUpdate'), 'branch': 'master'}
   if !has('nvim-0.8')
     " Since 42ab95d5, nvim 0.8.0+ is required
     let g:_plug_ts_config['commit'] = '4cccb6f4'
@@ -198,6 +200,7 @@ endif
 
 " Test integration
 if has('nvim')
+  Plug 'nvim-neotest/nvim-nio'      " required by neotest since 2024
   Plug 'nvim-neotest/neotest'
   Plug 'antoinemadec/FixCursorHold.nvim'
 
@@ -215,7 +218,7 @@ if has('nvim')
   Plug 'williamboman/nvim-lsp-installer'
   Plug 'folke/neodev.nvim'
 
-  Plug 'hrsh7th/nvim-cmp', {'commit': '4c05626'}
+  Plug 'hrsh7th/nvim-cmp'
   Plug 'hrsh7th/cmp-buffer'
   Plug 'hrsh7th/cmp-nvim-lsp'
   Plug 'hrsh7th/cmp-path'
@@ -228,7 +231,9 @@ if has('nvim')
   Plug 'kyazdani42/nvim-web-devicons'
   Plug 'onsails/lspkind-nvim'
 
-  Plug 'jose-elias-alvarez/null-ls.nvim'
+  " null-ls.nvim was deleted upstream; none-ls is the maintained drop-in (still require('null-ls'))
+  Plug 'nvimtools/none-ls.nvim', {'as': 'null-ls.nvim'}
+  Plug 'nvimtools/none-ls-extras.nvim'    " flake8, rustfmt (dropped from none-ls core)
 endif
 
 " Other language-specific plugins (supplementary and orthogonal to LSP)

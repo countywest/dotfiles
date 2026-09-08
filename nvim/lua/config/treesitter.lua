@@ -22,6 +22,11 @@ local parsers_to_install = {
 }
 parsers_to_install = parsers_to_install.minimal
 
+-- 'latex' has no prebuilt parser on the master branch; it needs the tree-sitter CLI to generate one.
+if vim.fn.executable('tree-sitter') == 0 then
+  parsers_to_install = vim.tbl_filter(function(x) return x ~= "latex" end, parsers_to_install)
+end
+
 if vim.fn.has('mac') > 0 then
   -- Disable 'dockerfile' until nvim-treesitter/nvim-treesitter#3515 is resolved
   parsers_to_install = vim.tbl_filter(function(x) return x ~= "dockerfile" end, parsers_to_install)
@@ -80,7 +85,7 @@ _G.TreesitterParse = function()
   end
 end
 local function throttle(fn, ms)
-  local timer = vim.loop.new_timer()
+  local timer = (vim.uv or vim.loop).new_timer()
   local running = false
   return function(...)
     if not running then
@@ -125,7 +130,9 @@ function _G.TreesitterLoadCustomQuery(lang, query_name)
     vim.notify(msg, 'WARN', { title = "nvim/lua/config/treesitter.lua" })
     return
   end
-  require("vim.treesitter.query").set_query(lang, query_name, readfile(query_file))
+  -- set_query was renamed to set in nvim 0.9 and later removed
+  local set_query = vim.treesitter.query.set or vim.treesitter.query.set_query
+  set_query(lang, query_name, readfile(query_file))
 end
 
 -- python(fold): until GH-1451 is merged
