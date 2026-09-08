@@ -63,6 +63,12 @@ local function autoinstall_pynvim()
   -- Require pynvim >= 0.4.0
   local python3_neovim_version = system(vim.g.python3_host_prog .. " -c 'import pynvim; print(pynvim.VERSION.minor)' 2>/dev/null")
   if tonumber(python3_neovim_version) == nil or tonumber(python3_neovim_version) < 4 then
+    if system(vim.g.python3_host_prog .. " -m pip --version 2>/dev/null") == "" then
+      -- e.g. Debian/Ubuntu system python ships without pip (and is PEP 668 externally managed)
+      warning("pynvim is missing and " .. vim.g.python3_host_prog .. " has no pip; install it yourself, " ..
+              "e.g. `sudo apt install python3-pynvim` or `pip install pynvim`, then restart neovim.")
+      return false
+    end
     warning("Automatically installing pynvim into python environment: " .. vim.g.python3_host_prog)
     local pip_install_cmd = (
       vim.g.python3_host_prog .. " -m ensurepip; " ..
@@ -71,14 +77,24 @@ local function autoinstall_pynvim()
     vim.api.nvim_command("!" .. pip_install_cmd)
     if vim.v.shell_error == 0 then
       echom("Successfully installed pynvim. Please restart neovim.", "MoreMsg")
+      return true
     else
       notify_later('g:python3_host_prog = ' .. vim.g.python3_host_prog)
       notify_later('Installing pynvim failed (try :Notifications) \n' .. pip_install_cmd)
       warning("Installation of pynvim has failed. Python-based features may not work.")
+      return false
     end
   end
+  return true
 end
-autoinstall_pynvim()
+if not autoinstall_pynvim() then
+  -- Disable the provider outright: plugins then see has('python3') == 0 and skip quietly,
+  -- instead of each one tripping the same "Failed to load python3 host" stack trace.
+  vim.g.loaded_python3_provider = 0
+  -- ...and the rplugin manifest, which would still try to bootstrap python3 remote plugins (wilder, semshi, ...)
+  vim.g.loaded_remote_plugins = 1
+  return
+end
 
 
 -- python version check

@@ -91,7 +91,7 @@ set ruler
 set backspace=indent,eol,start     " allow backspaces over everything
 set autoindent
 set smartindent
-set pastetoggle=<F8>
+if exists('+pastetoggle') | set pastetoggle=<F8> | endif   " removed in nvim 0.10+
 
 set nowrap
 set textwidth=0             " disable automatic line breaking
@@ -1426,9 +1426,9 @@ endif
 function! s:setup_which_key()
 lua << EOF
   require("which-key").setup {
-    window = {
+    win = {  -- which-key v3 renamed `window` to `win` (winblend moved under `wo`)
       border = "single",
-      winblend = 10,
+      wo = { winblend = 10 },
     },
     layout = {
       height = { min = 4, max = 8 },

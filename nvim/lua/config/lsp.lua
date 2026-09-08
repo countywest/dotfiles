@@ -44,7 +44,6 @@ local on_attach = function(client, bufnr)
   -- Keybindings
   -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
   local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
   local opts = { noremap = true, silent = true }
 
   -- See `:help vim.lsp.*` for documentation on any of the below functions
@@ -174,9 +173,28 @@ lsp_installer.on_server_ready(function(server)
   -- Customize the options passed to the server
   opts = vim.tbl_extend("error", opts, _G.lsp_setup_opts[server.name] or {})
 
-  -- This setup() function is exactly the same as lspconfig's setup function (:help lspconfig-quickstart)
-  server:setup(opts)
-  vim.cmd [[ do User LspAttachBuffers ]]
+  -- nvim-lsp-installer (archived 2022) only contributes the install path (cmd) here; its own
+  -- server:setup() pokes lspconfig internals that no longer exist, so register with the
+  -- nvim 0.11+ API instead. lspconfig ships the per-server defaults as lsp/<name>.lua.
+  local name = ({ tsserver = 'ts_ls', sumneko_lua = 'lua_ls' })[server.name] or server.name
+  opts = vim.tbl_deep_extend("force", server:get_default_options(), opts)
+  if vim.lsp.config then
+    -- vim.lsp.config validates cmd[1] against $PATH and ignores cmd_env, so resolve the
+    -- binary nvim-lsp-installer put on its private PATH to an absolute path.
+    local cmd = opts.cmd or vim.lsp.config[name].cmd
+    if type(cmd) == 'table' and vim.fn.executable(cmd[1]) == 0 and (opts.cmd_env or {}).PATH then
+      for _, dir in ipairs(vim.split(opts.cmd_env.PATH, ':', { trimempty = true })) do
+        if vim.fn.executable(dir .. '/' .. cmd[1]) == 1 then
+          opts.cmd = vim.list_extend({ dir .. '/' .. cmd[1] }, vim.list_slice(cmd, 2))
+          break
+        end
+      end
+    end
+    vim.lsp.config(name, opts)
+    vim.lsp.enable(name)
+  else
+    require('lspconfig')[name].setup(opts)
+  end
 end)
 
 -- Automatically install if a required LSP server is missing.
@@ -198,14 +216,15 @@ do
   -- :help lsp-method
   -- :help lsp-handler
   -- :help lsp-handler-configuration
-  local lsp_handlers_hover = vim.lsp.with(vim.lsp.handlers.hover, {
-    border = 'single'
-  })
+  -- (vim.lsp.with() is deprecated since nvim 0.11: merge the handler config by hand)
+  local lsp_handlers_hover = function(err, result, ctx, config)
+    return vim.lsp.handlers.hover(err, result, ctx, vim.tbl_extend('force', { border = 'single' }, config or {}))
+  end
   vim.lsp.handlers["textDocument/hover"] = function(err, result, ctx, config)
     local bufnr, winnr = lsp_handlers_hover(err, result, ctx, config)
     if winnr ~= nil then
       -- opacity/alpha for hover window
-      vim.api.nvim_win_set_option(winnr, "winblend", 20)
+      vim.wo[winnr].winblend = 20
     end
     return bufnr, winnr
   end
@@ -268,7 +287,7 @@ do
       local _, winnr = _G.LspDiagnosticsShowPopup()
       if winnr ~= nil then
         -- opacity/alpha for diagnostics
-        vim.api.nvim_win_set_option(winnr, "winblend", 20)
+        vim.wo[winnr].winblend = 20
       end
     end
   end
@@ -312,7 +331,7 @@ end
 vim.o.completeopt = "menu,menuone,noselect"
 
 local has_words_before = function()
-  if vim.api.nvim_buf_get_option(0, 'buftype') == 'prompt' then
+  if vim.bo.buftype == 'prompt' then
     return false
   end
   local line, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -622,7 +641,7 @@ lsp_status.register_progress()
 -- LspStatus(): status string for airline
 do
   _G.LspStatus = function()
-    if #vim.lsp.get_active_clients({bufnr = 0}) > 0 then
+    if #vim.lsp.get_clients({bufnr = 0}) > 0 then
       return lsp_status.status()
     end
     return ''
@@ -683,6 +702,9 @@ require("trouble").setup {
 if pcall(require, "null-ls") then
   local null_ls = require("null-ls")
   local h = require("null-ls.helpers")
+  -- flake8/rustfmt live in none-ls-extras.nvim now; nil (and skipped below) if that plugin is missing
+  local function extra(mod) local ok, b = pcall(require, "none-ls." .. mod); return ok and b or nil end
+  local flake8, rustfmt = extra("diagnostics.flake8"), extra("formatting.rustfmt")
 
   -- @see https://github.com/jose-elias-alvarez/null-ls.nvim/blob/main/doc/CONFIG.md
   -- @see https://github.com/jose-elias-alvarez/null-ls.nvim/blob/main/doc/BUILTINS.md
@@ -718,7 +740,7 @@ if pcall(require, "null-ls") then
               utils.root_has_file("setup.cfg")
           end,
         })),
-      _cond("flake8", null_ls.builtins.diagnostics.flake8.with({
+      _cond("flake8", flake8 and flake8.with({
           method = null_ls.methods.DIAGNOSTICS_ON_SAVE,
           -- Activate when flake8 is available and any project config is found,
           -- per https://flake8.pycqa.org/en/latest/user/configuration.html
@@ -750,7 +772,7 @@ if pcall(require, "null-ls") then
             }),
         })),
       -- @rust
-      _cond("rustfmt", null_ls.builtins.formatting.rustfmt.with {
+      _cond("rustfmt", rustfmt and rustfmt.with {
         extra_args = { "--edition=2018" }
       }),
     },
@@ -813,7 +835,7 @@ if pcall(require, "null-ls") then
     -- TODO: Enable only on the current project specified by PATH.
     local formatting_clients = vim.tbl_filter(function(client)
       return client.server_capabilities.documentFormattingProvider
-    end, vim.lsp.get_active_clients({bufnr = 0}))
+    end, vim.lsp.get_clients({bufnr = 0}))
     if vim.tbl_count(formatting_clients) > 0 then
       vim.lsp.buf.format({ timeout_ms = 2000 })
       return true
