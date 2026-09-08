@@ -303,20 +303,21 @@ install_neovim() {
     fi
     sleep 1;  # allow users to read above comments
 
+    local NVIM_ARCH=$(uname -m); [ "$NVIM_ARCH" = aarch64 ] && NVIM_ARCH=arm64   # asset names since v0.10.4
     local TMP_NVIM_DIR="/tmp/$USER/neovim"; mkdir -p $TMP_NVIM_DIR
-    local NVIM_DOWNLOAD_URL="https://github.com/neovim/neovim/releases/download/${NEOVIM_VERSION}/nvim-linux64.tar.gz"
+    local NVIM_DOWNLOAD_URL="https://github.com/neovim/neovim/releases/download/${NEOVIM_VERSION}/nvim-linux-${NVIM_ARCH}.tar.gz"
 
     cd $TMP_NVIM_DIR
     wget --backups=1 $NVIM_DOWNLOAD_URL      # always overwrite, having only one backup
-    tar $VERBOSE -xzf "nvim-linux64.tar.gz"
-    ls --color -d $TMP_NVIM_DIR/nvim-linux64
+    tar $VERBOSE -xzf "nvim-linux-${NVIM_ARCH}.tar.gz"
+    ls --color -d $TMP_NVIM_DIR/nvim-linux-${NVIM_ARCH}
 
     # copy and merge into ~/.local/bin
     echo -e "${COLOR_GREEN}[*] Copying to $PREFIX ... ${COLOR_NONE}"
     mkdir -p "$PREFIX/bin/"
-    cp $VERBOSE "nvim-linux64/bin/nvim" $PREFIX/bin/nvim \
+    cp $VERBOSE "nvim-linux-${NVIM_ARCH}/bin/nvim" $PREFIX/bin/nvim \
         || (echo -e "${COLOR_RED}Copy failed, please kill all nvim instances. (killall nvim)${COLOR_NONE}"; exit 1)
-    cp -RT $VERBOSE "nvim-linux64/" "$PREFIX"
+    cp -RT $VERBOSE "nvim-linux-${NVIM_ARCH}/" "$PREFIX"
 
     $PREFIX/bin/nvim --version
 }
