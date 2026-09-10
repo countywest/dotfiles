@@ -205,31 +205,14 @@ install_miniforge() {
     # Miniforge3.
     # https://github.com/conda-forge/miniforge
     set -e
-    local URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+    local URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
 
     local TMP_DIR="/tmp/$USER/miniforge/"; mkdir -p $TMP_DIR && cd ${TMP_DIR}
     wget -nc "$URL"
 
-    local MINIFORGE_PREFIX="$HOME/.miniforge3"
-    bash "Miniforge3-Linux-x86_64.sh" -b -p ${MINIFORGE_PREFIX}
+    local MINIFORGE_PREFIX="$HOME/miniforge3"
+    bash "Miniforge3-$(uname)-$(uname -m).sh" -b -p ${MINIFORGE_PREFIX}
     $MINIFORGE_PREFIX/bin/python3 --version
-}
-
-install_miniconda() {
-    # installs Miniconda3. (Deprecated: Use miniforge3)
-    # https://conda.io/miniconda.html
-    set -e
-    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-
-    TMP_DIR="/tmp/$USER/miniconda/"; mkdir -p $TMP_DIR && cd ${TMP_DIR}
-    wget -nc $MINICONDA_URL
-
-    MINICONDA_PREFIX="$HOME/.miniconda3/"
-    bash "Miniconda3-latest-Linux-x86_64.sh" -b -p ${MINICONDA_PREFIX}
-
-    # 3.9.5 as of Nov 2021
-    $MINICONDA_PREFIX/bin/python --version
-    echo -e "${COLOR_GREEN}All set!${COLOR_NONE}"
 }
 
 install_vim() {

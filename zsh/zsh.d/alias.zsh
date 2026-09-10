@@ -243,11 +243,11 @@ function cd-git-root() {
 
 # Python ======================================= {{{
 
-# anaconda
+# conda (miniforge)
 alias sa='conda activate'   # source activate is deprecated.
 alias ca='conda activate'
 function deactivate() {
-  # In anaconda/miniconda, use `conda deactivate`. In virtualenvs, `source deactivate`.
+  # In conda, use `conda deactivate`. In virtualenvs, `source deactivate`.
   # Note: deactivate could have been an alias, but legacy virtualenvs' shell scripts
   # are written wrong (i.e. missing `function`) as they have a conflict with the alias.
   [[ -n "$CONDA_DEFAULT_ENV" ]] && conda deactivate || source deactivate
@@ -406,7 +406,7 @@ fi
 
 function site-packages() {
     # print the path to the site packages from current python environment,
-    # e.g. ~/.anaconda3/envs/XXX/lib/python3.6/site-packages/
+    # e.g. ~/miniforge3/envs/XXX/lib/python3.6/site-packages/
 
     local base=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
     if [[ -n "$1" ]] && [[ ! -d "$base/$1" ]]; then
