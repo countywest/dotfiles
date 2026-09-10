@@ -34,7 +34,7 @@ for asset in J[0]['assets']:
     print(asset['browser_download_url'])
 ")
   echo -e "${COLOR_YELLOW}download_url = ${COLOR_NONE}$download_url"
-  test -n $download_url
+  test -n "$download_url"
   sleep 0.5
 
   local tmpdir="/tmp/$USER/$name"
@@ -107,10 +107,10 @@ install_ncurses() {
     set -e
 
     TMP_NCURSES_DIR="/tmp/$USER/ncurses/"; mkdir -p $TMP_NCURSES_DIR
-    NCURSES_DOWNLOAD_URL="https://invisible-mirror.net/archives/ncurses/ncurses-5.9.tar.gz";
+    NCURSES_DOWNLOAD_URL="https://invisible-mirror.net/archives/ncurses/ncurses-6.5.tar.gz";
 
-    wget -nc -O $TMP_NCURSES_DIR/ncurses-5.9.tar.gz $NCURSES_DOWNLOAD_URL
-    tar -xvzf $TMP_NCURSES_DIR/ncurses-5.9.tar.gz -C $TMP_NCURSES_DIR --strip-components 1
+    wget -nc -O $TMP_NCURSES_DIR/ncurses-6.5.tar.gz $NCURSES_DOWNLOAD_URL
+    tar -xvzf $TMP_NCURSES_DIR/ncurses-6.5.tar.gz -C $TMP_NCURSES_DIR --strip-components 1
     cd $TMP_NCURSES_DIR
 
     # compile as shared library, at ~/.local/lib/libncurses.so (as well as static lib)
@@ -123,7 +123,7 @@ install_ncurses() {
 install_zsh() {
     set -e
 
-    ZSH_VER="5.8"
+    ZSH_VER="5.9.2"
     TMP_ZSH_DIR="/tmp/$USER/zsh/"; mkdir -p $TMP_ZSH_DIR
 
     wget -nc -O $TMP_ZSH_DIR/zsh.tar.xz "https://sourceforge.net/projects/zsh/files/zsh/${ZSH_VER}/zsh-${ZSH_VER}.tar.xz/download"
@@ -144,7 +144,7 @@ install_zsh() {
 install_node() {
     # Install node.js LTS at ~/.local
     set -e
-    curl -sL install-node.now.sh | bash -s -- --prefix=$HOME/.local --verbose --yes
+    curl -fsSL https://install-node.vercel.app/lts | bash -s -- --prefix=$HOME/.local --verbose --yes
 
     echo -e "\n$(which node) : $(node --version)"
     node --version
@@ -176,7 +176,7 @@ install_bazel() {
         curl -L https://api.github.com/repos/bazelbuild/bazel/releases/latest 2>/dev/null | \
         python -c 'import json, sys; print(json.load(sys.stdin)["name"])'\
     )
-    test -n $BAZEL_LATEST_VERSION
+    test -n "$BAZEL_LATEST_VERSION"
     BAZEL_VER="${BAZEL_LATEST_VERSION}"
     echo -e "${COLOR_YELLOW}Installing Bazel ${BAZEL_VER} ...${COLOR_NONE}"
 
@@ -233,7 +233,7 @@ install_vim() {
         curl -L https://api.github.com/repos/vim/vim/tags 2>/dev/null | \
         python -c 'import json, sys; print(json.load(sys.stdin)[0]["name"])'\
     )
-    test -n $VIM_LATEST_VERSION
+    test -n "$VIM_LATEST_VERSION"
     local VIM_LATEST_VERSION=${VIM_LATEST_VERSION/v/}    # (e.g) 8.0.1234
     echo -e "${COLOR_GREEN}Installing vim $VIM_LATEST_VERSION ...${COLOR_NONE}"
     sleep 1
@@ -350,7 +350,7 @@ install_ripgrep() {
         curl -L https://api.github.com/repos/BurntSushi/ripgrep/releases 2>/dev/null | \
         python -c 'import json, sys; J = json.load(sys.stdin); assert J[0]["assets"][0]["name"].startswith("ripgrep"); print(J[0]["name"])'\
     )
-    test -n $RIPGREP_LATEST_VERSION
+    test -n "$RIPGREP_LATEST_VERSION"
     echo -e "${COLOR_YELLOW}Installing ripgrep ${RIPGREP_LATEST_VERSION} ...${COLOR_NONE}"
     RIPGREP_VERSION="${RIPGREP_LATEST_VERSION}"
 
@@ -436,7 +436,7 @@ install_lazygit() {
 install_rsync() {
   set -e
 
-  local URL="https://www.samba.org/ftp/rsync/src/rsync-3.2.4.tar.gz"
+  local URL="https://www.samba.org/ftp/rsync/src/rsync-3.5.0.tar.gz"
   local TMP_DIR="/tmp/$USER/rsync"; mkdir -p $TMP_DIR
 
   wget -N -O $TMP_DIR/rsync.tar.gz "$URL"
