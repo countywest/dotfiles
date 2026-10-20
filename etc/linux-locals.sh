@@ -156,14 +156,20 @@ install_node() {
 }
 
 install_tmux() {
-    # tmux: we can do static compile, or use tmux-appimage (include libevents/ncurses)
-    # see https://github.com/nelsonenzo/tmux-appimage
+    # tmux: a static build (no libevent/ncurses needed); tmux-appimage stops at 3.5a
+    # see https://github.com/mjakob-gh/build-static-tmux
+    # tmux before 3.4 counts VS16 emoji (e.g. ✖️) as one cell while most
+    # terminals draw them as two, which leaves stray characters on screen.
     set -e
-    TMUX_VER="3.2a"
+    TMUX_VER="3.6b"
 
-    TMUX_APPIMAGE_URL="https://github.com/nelsonenzo/tmux-appimage/releases/download/${TMUX_VER}/tmux.appimage"
-    wget -O $HOME/.local/bin/tmux $TMUX_APPIMAGE_URL
-    chmod +x $HOME/.local/bin/tmux
+    TMUX_URL="https://github.com/mjakob-gh/build-static-tmux/releases/download/v${TMUX_VER}/tmux.linux-amd64.stripped.gz"
+    # Download aside and rename: a running tmux keeps its file busy,
+    # so writing over it in place fails with "Text file busy".
+    mkdir -p $HOME/.local/bin
+    wget -O - $TMUX_URL | gunzip > $HOME/.local/bin/tmux.download
+    chmod +x $HOME/.local/bin/tmux.download
+    mv -f $HOME/.local/bin/tmux.download $HOME/.local/bin/tmux
 
     ~/.local/bin/tmux -V
 }
