@@ -161,7 +161,7 @@ install_tmux() {
     # tmux before 3.4 counts VS16 emoji (e.g. ✖️) as one cell while most
     # terminals draw them as two, which leaves stray characters on screen.
     set -e
-    TMUX_VER="3.6b"
+    TMUX_VER="3.7b"
 
     TMUX_URL="https://github.com/mjakob-gh/build-static-tmux/releases/download/v${TMUX_VER}/tmux.linux-amd64.stripped.gz"
     # Download aside and rename: a running tmux keeps its file busy,
