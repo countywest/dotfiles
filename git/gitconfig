@@ -24,7 +24,8 @@
 	mailmap = true
 
 [alias]
-	history = log --graph --decorate \
+	# commit graph. Not 'history': git 2.54+ has a builtin `git history`, which shadows aliases.
+	lg = log --graph --decorate \
 		--pretty=format:'%C(yellow)%h%Creset  %C(auto)%d%Creset %s  %Cgreen(%ar) %C(bold blue)<%an>%Creset' \
 		--abbrev-commit --date=short --date-order
 
