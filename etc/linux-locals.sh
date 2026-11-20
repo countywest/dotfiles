@@ -24,28 +24,37 @@ _template_github_latest() {
   fi
 
   echo -e "${COLOR_YELLOW}Installing $name from $repo ... ${COLOR_NONE}"
+  # releases/latest: the newest non-prerelease. Print the first asset matching the glob.
   local download_url=$(\
-    curl -L https://api.github.com/repos/${repo}/releases 2>/dev/null | \
-    python -c "\
+    curl -fsSL https://api.github.com/repos/${repo}/releases/latest | \
+    python3 -c "\
 import json, sys, fnmatch;
-J = json.load(sys.stdin);
-for asset in J[0]['assets']:
+for asset in json.load(sys.stdin)['assets']:
   if fnmatch.fnmatch(asset['name'], '$filename'):
-    print(asset['browser_download_url'])
+    print(asset['browser_download_url']); break
 ")
   echo -e "${COLOR_YELLOW}download_url = ${COLOR_NONE}$download_url"
   test -n "$download_url"
-  sleep 0.5
 
-  local tmpdir="/tmp/$USER/$name"
-  local filename="$(basename $download_url)"
-  mkdir -p $tmpdir
-  wget -O "$tmpdir/$filename" "$download_url"
+  # A fresh, private (0700) dir with an unpredictable name: a fixed /tmp/$USER/... path on a shared
+  # machine could be pre-created (e.g. as a symlink) by another user to swap files before we copy them.
+  local tmpdir; tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/$name.XXXXXX")
+  local filename="$(basename "$download_url")"
+  curl -fL -o "$tmpdir/$filename" "$download_url"
 
   echo -e "${COLOR_YELLOW}Extracting to: $tmpdir${COLOR_NONE}"
-  cd $tmpdir && tar -xvzf $filename
+  cd "$tmpdir" && tar -xzf "$filename"
 
   echo -e "${COLOR_YELLOW}Copying ...${COLOR_NONE}"
+}
+
+_linux_arch() {
+  # CPU name as used in Rust-style release assets (e.g. <name>-<ver>-aarch64-unknown-linux-musl)
+  case "$(uname -m)" in
+    x86_64|amd64)  echo x86_64 ;;
+    aarch64|arm64) echo aarch64 ;;
+    *) echo "unsupported CPU architecture: $(uname -m)" >&2; return 1 ;;
+  esac
 }
 
 #---------------------------------------------------------------------------------------------------
@@ -56,7 +65,7 @@ install_git() {
 
     local GIT_LATEST_VERSION=$(\
         curl -L https://api.github.com/repos/git/git/tags 2>/dev/null | \
-        python -c 'import json, sys; print(json.load(sys.stdin)[0]["name"])'\
+        python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["name"])'\
     )  # e.g. "v2.38.1"
     test  -n "$GIT_LATEST_VERSION"
 
@@ -180,7 +189,7 @@ install_bazel() {
     # install the 'latest' stable release (no pre-releases.)
     BAZEL_LATEST_VERSION=$(\
         curl -L https://api.github.com/repos/bazelbuild/bazel/releases/latest 2>/dev/null | \
-        python -c 'import json, sys; print(json.load(sys.stdin)["name"])'\
+        python3 -c 'import json, sys; print(json.load(sys.stdin)["name"])'\
     )
     test -n "$BAZEL_LATEST_VERSION"
     BAZEL_VER="${BAZEL_LATEST_VERSION}"
@@ -237,7 +246,7 @@ install_vim() {
     local TMP_VIM_DIR="/tmp/$USER/vim/"; mkdir -p $TMP_VIM_DIR
     local VIM_LATEST_VERSION=$(\
         curl -L https://api.github.com/repos/vim/vim/tags 2>/dev/null | \
-        python -c 'import json, sys; print(json.load(sys.stdin)[0]["name"])'\
+        python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["name"])'\
     )
     test -n "$VIM_LATEST_VERSION"
     local VIM_LATEST_VERSION=${VIM_LATEST_VERSION/v/}    # (e.g) 8.0.1234
@@ -271,7 +280,7 @@ install_neovim() {
 
     local NEOVIM_VERSION=$(\
         curl -L https://api.github.com/repos/neovim/neovim/releases/latest 2>/dev/null | \
-        python -c 'import json, sys; print(json.load(sys.stdin)["tag_name"])'\
+        python3 -c 'import json, sys; print(json.load(sys.stdin)["tag_name"])'\
     )   # starts with "v", e.g. "v0.7.0"
     test -n "$NEOVIM_VERSION"
 
@@ -330,49 +339,25 @@ install_exa() {
 }
 
 install_fd() {
-    # install fd
     # https://github.com/sharkdp/fd/releases
     set -e
-    local FD_VERSION="v8.5.3"
-
-    TMP_FD_DIR="/tmp/$USER/fd"; mkdir -p $TMP_FD_DIR
-    FD_DOWNLOAD_URL="https://github.com/sharkdp/fd/releases/download/${FD_VERSION}/fd-${FD_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-    echo $FD_DOWNLOAD_URL
-
-    cd $TMP_FD_DIR
-    curl -L $FD_DOWNLOAD_URL | tar -xvzf - --strip-components 1
-    cp "./fd" $PREFIX/bin
-    mkdir -p $HOME/.local/share/zsh/site-functions
-    cp "./autocomplete/_fd" $PREFIX/share/zsh/site-functions
-
-    $PREFIX/bin/fd --version
-    echo "$(which fd) : $(fd --version)"
+    local arch; arch=$(_linux_arch)
+    _template_github_latest "fd" "sharkdp/fd" "fd-*-${arch}-unknown-linux-musl.tar.gz"
+    mkdir -p "$PREFIX/bin" "$PREFIX/share/zsh/site-functions"
+    cp fd-*/fd "$PREFIX/bin"
+    cp fd-*/autocomplete/_fd "$PREFIX/share/zsh/site-functions"
+    "$PREFIX/bin/fd" --version
 }
 
 install_ripgrep() {
-    # install ripgrep
+    # https://github.com/BurntSushi/ripgrep/releases
     set -e
-    RIPGREP_LATEST_VERSION=$(\
-        curl -L https://api.github.com/repos/BurntSushi/ripgrep/releases 2>/dev/null | \
-        python -c 'import json, sys; J = json.load(sys.stdin); assert J[0]["assets"][0]["name"].startswith("ripgrep"); print(J[0]["name"])'\
-    )
-    test -n "$RIPGREP_LATEST_VERSION"
-    echo -e "${COLOR_YELLOW}Installing ripgrep ${RIPGREP_LATEST_VERSION} ...${COLOR_NONE}"
-    RIPGREP_VERSION="${RIPGREP_LATEST_VERSION}"
-
-    TMP_RIPGREP_DIR="/tmp/$USER/ripgrep"; mkdir -p $TMP_RIPGREP_DIR
-    RIPGREP_DOWNLOAD_URL="https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-    echo $RIPGREP_DOWNLOAD_URL
-
-    cd $TMP_RIPGREP_DIR
-    curl -L $RIPGREP_DOWNLOAD_URL | tar -xvzf - --strip-components 1
-    cp "./rg" $PREFIX/bin
-
-    mkdir -p $HOME/.local/share/zsh/site-functions
-    cp "./complete/_rg" $PREFIX/share/zsh/site-functions
-
-    $PREFIX/bin/rg --version
-    echo "$(which rg) : $(rg --version)"
+    local arch; arch=$(_linux_arch)
+    _template_github_latest "ripgrep" "BurntSushi/ripgrep" "ripgrep-*-${arch}-unknown-linux-musl.tar.gz"
+    mkdir -p "$PREFIX/bin" "$PREFIX/share/zsh/site-functions"
+    cp ripgrep-*/rg "$PREFIX/bin"
+    cp ripgrep-*/complete/_rg "$PREFIX/share/zsh/site-functions"
+    "$PREFIX/bin/rg" --version
 }
 
 install_xsv() {
@@ -386,14 +371,13 @@ install_xsv() {
 
 install_bat() {
     # https://github.com/sharkdp/bat/releases
-    local BAT_VERSION="0.22.1"
-
-    set -e; set -x
-    mkdir -p $PREFIX/bin && cd $PREFIX/bin
-    curl -L "https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
-        | tar zxf - --strip-components 1 --wildcards --no-anchored 'bat*'     # bat, bat.1
-
-    $PREFIX/bin/bat --version
+    set -e
+    local arch; arch=$(_linux_arch)
+    _template_github_latest "bat" "sharkdp/bat" "bat-*-${arch}-unknown-linux-musl.tar.gz"
+    mkdir -p "$PREFIX/bin" "$PREFIX/share/man/man1"
+    cp bat-*/bat "$PREFIX/bin"
+    cp bat-*/bat.1 "$PREFIX/share/man/man1"
+    "$PREFIX/bin/bat" --version
 }
 
 install_go() {
@@ -419,10 +403,11 @@ install_go() {
 
 install_lazydocker() {
   set -e
-  _template_github_latest "lazydocker" "jesseduffield/lazydocker" "lazydocker_*_Linux_x86_64.tar.gz"
-  [[ $(pwd) =~ ^/tmp/$USER/ ]]
+  local arch; arch=$(_linux_arch); [ "$arch" = aarch64 ] && arch=arm64
+  _template_github_latest "lazydocker" "jesseduffield/lazydocker" "lazydocker_*_Linux_${arch}.tar.gz"
 
-  cp -v "./lazydocker" $PREFIX/bin
+  mkdir -p "$PREFIX/bin"
+  cp -v "./lazydocker" "$PREFIX/bin"
 
   echo -e "\n\n${COLOR_WHITE}$(which lazydocker)${COLOR_NONE}"
   $PREFIX/bin/lazydocker --version
@@ -430,12 +415,13 @@ install_lazydocker() {
 
 install_lazygit() {
   set -e
-  _template_github_latest "lazygit" "jesseduffield/lazygit" "lazygit_*_Linux_x86_64.tar.gz"
-  [[ $(pwd) =~ ^/tmp/$USER/ ]]
+  local arch; arch=$(_linux_arch); [ "$arch" = aarch64 ] && arch=arm64
+  _template_github_latest "lazygit" "jesseduffield/lazygit" "lazygit_*_linux_${arch}.tar.gz"   # lowercase 'linux' (unlike lazydocker)
 
-  cp -v "./lazygit" $PREFIX/bin
+  mkdir -p "$PREFIX/bin"
+  cp -v "./lazygit" "$PREFIX/bin"
 
-  echo -e "\n\n${COLOR_WHITE}$(which lazydocker)${COLOR_NONE}"
+  echo -e "\n\n${COLOR_WHITE}$(which lazygit)${COLOR_NONE}"
   $PREFIX/bin/lazygit --version
 }
 
