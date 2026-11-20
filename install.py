@@ -191,21 +191,56 @@ post_actions += [  # install some essential packages (linux)
     type node >/dev/null 2>&1 || bin/dotfiles install node
     type rg   >/dev/null 2>&1 || bin/dotfiles install ripgrep
     type fd   >/dev/null 2>&1 || bin/dotfiles install fd
+
+    # Required by neovim (nvim-treesitter builds parsers with the tree-sitter CLI)
+    if ! type tree-sitter >/dev/null 2>&1; then
+        bin/dotfiles install tree-sitter
+    else
+        tree-sitter --version
+    fi
     '''
 ] if platform.system() == "Linux" else []
 
+post_actions += [  # macOS
+    '''#!/bin/bash
+    # macOS: homebrew installation
+
+    # Allow local installation (as a fallback)
+    PATH="$PATH:$HOME/.local/bin:$HOME/.homebrew/bin"
+    type brew || { echo "Homebrew not found. Install: https://brew.sh/" && exit 1; }
+
+    # Required by neovim (nvim-treesitter builds parsers with the tree-sitter CLI)
+    if ! type tree-sitter >/dev/null 2>&1; then
+        brew install tree-sitter-cli
+    else
+        tree-sitter --version
+    fi
+    '''
+] if platform.system() == "Darwin" else []
+
 post_actions += [  # neovim
     '''#!/bin/bash
-    # validate neovim package installation on python2/3 and automatically install if missing
-    bash "etc/install-neovim-py.sh"
+    # check the neovim version (offers a local install on Linux if missing or outdated)
+    PATH="$PATH:$HOME/.local/bin"
+    bash "etc/install-neovim.sh"
 ''']
 
-post_actions += [  # vim-plug
-    # Run vim-plug installation
-    {'install' : 'PATH="$PATH:~/.local/bin"  nvim --headless +"set nonumber" +"PlugInstall --sync" +%print +UpdateRemotePlugins +qall',
-     'update'  : 'PATH="$PATH:~/.local/bin"  nvim --headless +"set nonumber" +"PlugUpdate  --sync" +%print +UpdateRemotePlugins +qall',
-     'none'    : '# nvim +PlugUpdate (Skipped)',
+post_actions += [  # neovim plugins (lazy.nvim); vanilla vim uses vim-plug via :PlugInstall
+    {'update'  : '''# vim plugins: install and update via Lazy
+        PATH="$PATH:$HOME/.local/bin" \
+        nvim --headless \
+            -c "lua require('lazy').update { wait = true }" \
+            -c "lua require('config.plugins').report_errors { exit = true }"
+        ''',
+     'none'    : '# vim plugins: skipped',
      }['update' if not args.skip_vimplug else 'none']
+    + '\n' +
+    r'''#!/bin/bash
+    if [[ -n "~/.vim/plugged/*.cloning(#qN)" ]]; then
+        echo "Cleaning up plugin installation artifacts..."
+        rm -fv ~/.vim/plugged/*.cloning
+    fi
+    '''
 ]
 
 post_actions += [  # gitconfig.secret

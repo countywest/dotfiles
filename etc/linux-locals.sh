@@ -48,6 +48,17 @@ for asset in json.load(sys.stdin)['assets']:
   echo -e "${COLOR_YELLOW}Copying ...${COLOR_NONE}"
 }
 
+_glibc_version() {
+  # https://stackoverflow.com/questions/71070969/how-to-extract-and-compare-the-libc-versions-at-runtime
+  local libcfile="$(grep -azm1 '/libc.so.6$' /etc/ld.so.cache | tr -d '\0')"
+  grep -aoP 'GNU C Library [^\n]* release version \K[0-9]*.[0-9]*' "$libcfile"
+}
+_version_check() {
+  # _version_check {curver} {targetver}: exit code is 0 if curver >= targetver
+  local curver="$1"; local targetver="$2";
+  [ "$targetver" = "$(echo -e "$curver\n$targetver" | sort -V | head -n1)" ]
+}
+
 _linux_arch() {
   # CPU name as used in Rust-style release assets (e.g. <name>-<ver>-aarch64-unknown-linux-musl)
   case "$(uname -m)" in
@@ -162,6 +173,27 @@ install_node() {
     $HOME/.local/bin/npm install -g yarn
     which yarn && yarn --version
     $HOME/.local/bin/npm install -g http-server diff-so-fancy || true;
+}
+
+install_tree-sitter() {
+  # tree-sitter CLI (via npm), used by nvim-treesitter to build parsers
+  if ! type "npm" >/dev/null 2>&1; then
+    echo 'node/npm required. run `dotfiles install node`' && return 1;
+  fi
+
+  local TREESITTER_VERSION
+  if _version_check "$(_glibc_version)" 2.39; then
+    # Ubuntu 24+, tree-sitter-cli 0.26+ requires glibc 2.39+
+    TREESITTER_VERSION=">=0.26.0"
+  else
+    TREESITTER_VERSION="~0.25.0"
+  fi
+
+  set -x
+  PATH="$PATH:$HOME/.local/bin" \
+    npm install -g tree-sitter-cli"@${TREESITTER_VERSION}"
+
+  tree-sitter --version
 }
 
 install_tmux() {
