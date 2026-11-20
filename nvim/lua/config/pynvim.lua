@@ -45,6 +45,21 @@ if vim.g.python3_host_prog == "" or not vim.g.python3_host_prog then
   return NO_PYNVIM
 end
 
+-- If the $PATH python3 lacks pynvim but the conda base python ($CONDA_EXE, see ~/.zshenv)
+-- has it, use that rather than pip-installing pynvim into e.g. Homebrew's or Debian's python, which are
+-- externally managed (PEP 668) and may not even ship pip.
+if not os.getenv('PYTHON3_HOST_PROG') and vim.env.CONDA_EXE then
+  local conda_python = vim.fn.fnamemodify(vim.env.CONDA_EXE, ':h') .. '/python3'
+  local function has_pynvim(python)
+    vim.fn.system({ python, '-W', 'ignore', '-c', 'import pynvim' })
+    return vim.v.shell_error == 0
+  end
+  if conda_python ~= vim.g.python3_host_prog and vim.fn.executable(conda_python) == 1
+      and not has_pynvim(vim.g.python3_host_prog) and has_pynvim(conda_python) then
+    vim.g.python3_host_prog = conda_python
+  end
+end
+
 -- Run host python3 to get the version info table (asynchronously).
 -- Note: we don't run the provider (py3eval) directly, because it can block the UI.
 ---@param callback fun(version_info: integer[]|nil, result: vim.SystemCompleted)  version_info: e.g., { 3, 11, 5 }; or nil if python3 failed
