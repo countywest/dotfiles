@@ -1,0 +1,12 @@
+#!/bin/sh
+# pbcopy: copy stdin to the *local* clipboard via OSC52, e.g. on a remote server:
+#   python main.py | pbcopy
+# Works over SSH. Inside tmux it needs `set -s set-clipboard on` (tmux/tmux.conf).
+
+# Local macOS: use the real pbcopy (in case this script shadows it on $PATH).
+if [ -z "$SSH_TTY" ] && [ -x /usr/bin/pbcopy ]; then
+  exec /usr/bin/pbcopy "$@"
+fi
+
+# Write to the terminal itself, so it works even if stdout is redirected.
+printf '\033]52;c;%s\a' "$(base64 | tr -d '\n')" > /dev/tty
