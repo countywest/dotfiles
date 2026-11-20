@@ -37,6 +37,25 @@ bindkey '\e.' insert-last-word # Alt-.
 # CTRL-X CTRL-E: Edit command in an external editor (even in insert mode)
 bindkey -M viins "$key_info[Control]X$key_info[Control]E" edit-command-line
 
+# Shift-Enter: insert a newline (multi-line command) instead of running it.
+# Terminals and tmux send a plain Enter for Shift-Enter unless the program asks for
+# distinct keys (xterm modifyOtherKeys), so ask only while a command line is being
+# edited; programs started from the shell are unaffected.
+# Known issue: herdr ignores modifyOtherKeys=1 (honors only 2, which also changes Ctrl-A etc.),
+# so there Shift-Enter stays a plain Enter.
+function _shift-enter-newline() { LBUFFER+=$'\n' }
+zle -N _shift-enter-newline
+for keymap in viins vicmd; do   # vicmd too, or the sequence would run as vi commands (e.g. '~')
+  bindkey -M $keymap $'\e[27;2;13~' _shift-enter-newline   # modifyOtherKeys format (tmux, xterm)
+  bindkey -M $keymap $'\e[13;2u' _shift-enter-newline      # CSI u format
+done
+unset keymap
+function _modify-other-keys-on()  { print -n $'\e[>4;1m' }
+function _modify-other-keys-off() { print -n $'\e[>4;0m' }
+autoload -Uz add-zle-hook-widget
+add-zle-hook-widget line-init _modify-other-keys-on
+add-zle-hook-widget line-finish _modify-other-keys-off
+
 
 # Note: see ~/.zsh/zsh.d/fzf-widgets.zsh
 # for more zsh widgets and their keybindings.
