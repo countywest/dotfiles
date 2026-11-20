@@ -139,8 +139,6 @@ compdef '_hosts' ssh-tmuxa
 
 GIT_VERSION=$(git --version | awk '{print $3}')
 
-alias github='\gh'
-
 function ghn() {
     # git lg, but truncate w.r.t the terminal size. Assumes not headless.
     # A few lines to subtract from the height: previous prompt (2) + blank (1) + current prompt (2)
