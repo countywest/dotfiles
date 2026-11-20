@@ -148,12 +148,12 @@ function ghn() {
     if [[ $num_lines -gt 25 ]]; then num_lines=$((num_lines - 5)); fi  # more margin
     git lg --color=always -n$num_lines "$@" | head -n$num_lines | less --QUIT-AT-EOF -F
 }
-alias gh='ghn'
-alias ghA='gh --all'
+# (no 'gh' alias: it would shadow the GitHub CLI)
+alias ghA='ghn --all'
 if _version_check $GIT_VERSION "2.0"; then
-  alias gha='gh --exclude=refs/stash --all'
+  alias gha='ghn --exclude=refs/stash --all'
 else
-  alias gha='gh --all'   # git < 1.9 has no --exclude option
+  alias gha='ghn --all'   # git < 1.9 has no --exclude option
 fi
 
 if (( $+commands[delta] )); then
