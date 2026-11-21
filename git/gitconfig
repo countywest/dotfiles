@@ -8,7 +8,8 @@
 
 [core]
 	excludesfile = ~/.gitignore
-	pager = "(diff-so-fancy 2>/dev/null || cat) | less --tabs=4 -RFX"
+	# pager: delta (syntax-highlighted diffs, see [delta]) if installed, otherwise diff-so-fancy or plain less
+	pager = "command -v delta >/dev/null && exec delta || (diff-so-fancy 2>/dev/null || cat) | less --tabs=4 -RFX"
 
 	# do not quote non-ascii characters; display unicodes as-is
 	quotepath = false
@@ -18,7 +19,11 @@
 
 [pager]
 	# Make sure the pager terminates when it hits on the end of log
-	log = less -FE
+	log = "command -v delta >/dev/null && exec delta --pager='less -FE' || exec less -FE"
+
+[interactive]
+	# git add -p: highlight the hunks with delta as well (--color-only keeps the lines intact)
+	diffFilter = "command -v delta >/dev/null && exec delta --color-only || exec cat"
 
 [log]
 	mailmap = true

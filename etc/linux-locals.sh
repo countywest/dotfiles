@@ -413,6 +413,17 @@ install_bat() {
     "$PREFIX/bin/bat" --version
 }
 
+install_delta() {
+    # https://github.com/dandavison/delta/releases (git pager with syntax highlighting)
+    set -e
+    local arch libc; arch=$(_linux_arch)
+    if [[ "$arch" == x86_64 ]]; then libc=musl; else libc=gnu; fi   # static musl build: x86_64 only
+    _template_github_latest "delta" "dandavison/delta" "delta-*-${arch}-unknown-linux-${libc}.tar.gz"
+    mkdir -p "$PREFIX/bin"
+    cp delta-*/delta "$PREFIX/bin"
+    "$PREFIX/bin/delta" --version
+}
+
 install_go() {
     # install go lang into ~/.go
     # https://golang.org/dl/
