@@ -1,0 +1,27 @@
+#!/bin/bash
+# rg.fzf [query]: search file contents with ripgrep as you type, previewing each match with bat;
+# Enter opens the chosen line in $EDITOR. The query is a ripgrep regex (smart case), and
+# hidden files are searched too (.gitignore is still respected).
+set -eu -o pipefail
+
+# {q}: fzf passes the query single-quoted. An empty query lists nothing (not every line).
+rg_cmd='[ -n {q} ] && rg --column --line-number --no-heading --color=always --smart-case --hidden --glob "!.git/" -- {q} || true'
+query="$*"
+# bat (named batcat in Debian/Ubuntu packages) highlights the matched line; plain cat -n otherwise
+if bat=$(command -v bat || command -v batcat); then
+  preview="$(printf '%q' "$bat") --color=always --style=numbers --highlight-line {2} -- {1}"
+else
+  preview='cat -n -- {1}'
+fi
+
+choice=$(
+  FZF_DEFAULT_COMMAND="${rg_cmd//\{q\}/$(printf '%q' "$query")}" \
+  fzf --ansi --disabled --query="$query" --prompt='rg> ' \
+      --bind="change:reload:$rg_cmd" \
+      --delimiter=: \
+      --preview="$preview" \
+      --preview-window='up,60%,border-bottom,+{2}+3/3'
+) || exit 0   # nothing chosen (Esc)
+
+IFS=: read -r file line _ <<< "$choice"
+exec ${EDITOR:-vim} "+$line" "$file"
