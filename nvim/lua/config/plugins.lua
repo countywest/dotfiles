@@ -60,6 +60,32 @@ require("lazy.manage.task.fs").clean.run = function(self)
   vim.schedule(function() M.cleanup_marker(plugin) end)
 end
 
+-- lazy-lock.json is committed, but lazy rewrites it with only the plugins enabled on this machine.
+-- Keep the entries of plugins disabled here (e.g. nvim-osc52 is SSH-only), so it does not churn between machines.
+do
+  local Lock = require("lazy.manage.lock")
+  local lazy_lock_update = Lock.update
+  Lock.update = function()
+    local Config = require("lazy.core.config")
+    local file = Config.options.lockfile
+    local ok, old = pcall(function() return vim.json.decode(table.concat(vim.fn.readfile(file), "\n")) end)
+    lazy_lock_update()
+    if not ok or type(old) ~= "table" then return end
+    local entries, kept = {}, false
+    for name, info in pairs(Lock.lock) do entries[name] = info end
+    for name, info in pairs(old) do
+      if not entries[name] and Config.spec.disabled[name] then entries[name], kept = info, true end
+    end
+    if not kept then return end
+    local names = vim.tbl_keys(entries)
+    table.sort(names)
+    local lines = vim.tbl_map(function(name)  -- the same format as lazy.manage.lock.update()
+      return ('  %q: { "branch": %q, "commit": %q }'):format(name, entries[name].branch, entries[name].commit)
+    end, names)
+    vim.fn.writefile(vim.split("{\n" .. table.concat(lines, ",\n") .. "\n}", "\n"), file, "b")
+  end
+end
+
 -- Monkey-patch: Normalize git origin, avoid unnecessary re-cloning on update
 ---@param repo string path to the git repository
 require("lazy.manage.git").get_origin = function(repo)

@@ -226,10 +226,11 @@ post_actions += [  # neovim
 ''']
 
 post_actions += [  # neovim plugins (lazy.nvim); vanilla vim uses vim-plug via :PlugInstall
-    {'update'  : '''# vim plugins: install and update via Lazy
+    {'update'  : '''# vim plugins: install, and check out the versions in nvim/lazy-lock.json
+        # (to update plugins: `:Lazy update` in nvim, then commit nvim/lazy-lock.json)
         PATH="$PATH:$HOME/.local/bin" \
         nvim --headless \
-            -c "lua require('lazy').update { wait = true }" \
+            -c "lua require('lazy').restore { wait = true }" \
             -c "lua require('config.plugins').report_errors { exit = true }"
         ''',
      'none'    : '# vim plugins: skipped',
