@@ -1,0 +1,33 @@
+#!/bin/bash
+# tmux-keys: search tmux key bindings with fzf; the chosen one runs as if its keys were typed.
+# Bound to <prefix> ? in ~/.tmux.conf, where it opens in a popup.
+#
+# Lists the prefix table, and the root table without mouse events
+# (bindings of other tables, e.g. copy-mode-vi, only work while that mode is active).
+set -eu -o pipefail
+
+# the client that opened this popup (the most recently active one): keys are replayed there
+client="$(tmux display-message -p '#{client_name}')"
+prefix="$(tmux show-options -gv prefix)"
+
+choice=$(
+  tmux list-keys -F '#{key_table}	#{key_string}	#{?key_note,#{key_note},#{key_command}}' |
+    awk -F'\t' -v prefix="$prefix" '
+      $1 == "prefix"                                 { printf "%s\t%-14s\t%s\n", $1, prefix " " $2, $3 }
+      $1 == "root" && $2 !~ /Mouse|Wheel|Click|Drag/ { printf "%s\t%-14s\t%s\n", $1, $2, $3 }' |
+    fzf --reverse --delimiter='\t' --with-nth=2.. --prompt='keys> ' --no-hscroll \
+        --header='Enter: run the binding (as if typed)'
+) || exit 0   # nothing chosen (Esc)
+
+table="${choice%%	*}"
+key="$(printf '%s' "$choice" | cut -f2 | sed 's/ *$//')"
+key="${key#"$prefix "}"
+[[ "$key" == ";" ]] && key='\;'   # a bare ; separates tmux commands
+
+keys=("$key")
+[[ "$table" == prefix ]] && keys=("$prefix" "$key")
+
+# Replay after the popup has closed (keys sent while it is open would go to the popup).
+# The command is shell-quoted (%q), then '#' doubled since run-shell expands formats.
+cmd="tmux send-keys -K -c $(printf '%q' "$client") $(printf '%q ' "${keys[@]}")"
+tmux run-shell -b -d 0.1 "${cmd//#/##}"
