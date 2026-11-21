@@ -53,6 +53,11 @@ endif
 
 call plug#end()
 
+" ~/.vim/plugged is shared with neovim's lazy.nvim, so it holds ~90 plugins vim-plug does not
+" know about, and :PlugClean would offer to delete (:PlugClean! deletes right away) all of them.
+" (one line: no line continuation, which 'compatible' mode under `vim -u ~/.vimrc` would not join)
+command! -nargs=0 -bar -bang PlugClean echoerr 'PlugClean is disabled: ~/.vim/plugged is shared with neovim (lazy.nvim)'
+
 " Automatically install missing plugins on startup
 function! s:plug_missing(plug)
   return !isdirectory(a:plug.dir) && !empty(get(a:plug, "uri"))
