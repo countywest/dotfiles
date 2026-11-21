@@ -3,8 +3,9 @@
 
 local augroup = vim.api.nvim_create_augroup('config.options', { clear = true })
 
--- Allow exrc
-vim.o.exrc = true
+-- Keep exrc off (the nvim default): otherwise a cloned repo's .nvim.lua/.nvimrc/.exrc
+-- runs as soon as "allow" is answered at the trust prompt.
+vim.o.exrc = false
 
 -- Spell Check: skip Korean and Chinese characters
 vim.opt.spelllang = { "en", "cjk" }
