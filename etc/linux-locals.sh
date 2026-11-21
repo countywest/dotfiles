@@ -334,13 +334,14 @@ install_neovim() {
     sleep 1;  # allow users to read above comments
 
     local NVIM_ARCH=$(uname -m); [ "$NVIM_ARCH" = aarch64 ] && NVIM_ARCH=arm64   # asset names since v0.10.4
-    local TMP_NVIM_DIR="/tmp/$USER/neovim"; mkdir -p $TMP_NVIM_DIR
+    # a fresh private (0700) dir, not a fixed /tmp/$USER/... path (see _template_github_latest)
+    local TMP_NVIM_DIR; TMP_NVIM_DIR=$(mktemp -d "${TMPDIR:-/tmp}/neovim.XXXXXX")
     local NVIM_DOWNLOAD_URL="https://github.com/neovim/neovim/releases/download/${NEOVIM_VERSION}/nvim-linux-${NVIM_ARCH}.tar.gz"
 
-    cd $TMP_NVIM_DIR
-    wget --backups=1 $NVIM_DOWNLOAD_URL      # always overwrite, having only one backup
+    cd "$TMP_NVIM_DIR"
+    wget "$NVIM_DOWNLOAD_URL"
     tar $VERBOSE -xzf "nvim-linux-${NVIM_ARCH}.tar.gz"
-    ls --color -d $TMP_NVIM_DIR/nvim-linux-${NVIM_ARCH}
+    ls --color -d "$TMP_NVIM_DIR/nvim-linux-${NVIM_ARCH}"
 
     # copy and merge into ~/.local/bin
     echo -e "${COLOR_GREEN}[*] Copying to $PREFIX ... ${COLOR_NONE}"
