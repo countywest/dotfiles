@@ -216,6 +216,16 @@ post_actions += [  # miniforge
     ~/miniforge3/bin/python3 -c 'import pynvim; print("pynvim", pynvim.__version__)'
 ''']
 
+post_actions += [  # fzf
+    r'''#!/bin/bash
+    # Install fzf into ~/.fzf (used by zsh and neovim), if missing
+    set -e
+    [ -d ~/.fzf ] || git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    # the fzf binary and ~/.fzf.zsh (sourced by zsh/zshrc); the shell rc files are left untouched
+    [ -x ~/.fzf/bin/fzf ] && [ -f ~/.fzf.zsh ] || ~/.fzf/install --all --no-update-rc
+    ~/.fzf/bin/fzf --version
+''']
+
 post_actions += [  # video2gif
     '''#!/bin/bash
     # Download command line scripts
