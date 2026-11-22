@@ -1,32 +1,27 @@
 Dotfiles
 ========
 
-🏠 Personal dotfiles for \*NIX (macOS and Linux) systems.
+🏠 Personal dotfiles for \*NIX (macOS and Linux) systems, forked from [wookayin/dotfiles](https://github.com/wookayin/dotfiles).
 
 Installation
 ------------
 
 ```bash
 $ git clone --recursive https://github.com/countywest/dotfiles.git ~/.dotfiles
-$ cd ~/.dotfiles && python install.py
+$ cd ~/.dotfiles && python3 install.py
 ```
-
-<!--
-Note: The option `-j8` (`--jobs 8`) works with Git >= 2.8 (parallel submodule fetching).
-For older versions of Git, try without `-j` option.
--->
 
 <br>
 
 
-The installation script will clone the repository into `~/.dotfiles` and create symbolic links (e.g., `~/.vimrc`) for you.
+The installation script creates symbolic links (e.g., `~/.vimrc`) to the files in `~/.dotfiles`, and installs the zsh and (neo)vim plugins.
 If target files already exist (e.g. `~/.vim`, `~/.vimrc`), you will need to manually resolve the conflict (delete the old one or just ignore). See Troubleshooting below for details.
 
 
 `$ dotfiles`
 ------------
 
-**To update dotfiles** (pull changes from upstream and run [`install.py`][install.py] again):
+**To update dotfiles** (pull the latest changes and run [`install.py`][install.py] again):
 
 ```bash
 $ dotfiles update
@@ -38,6 +33,8 @@ On Linux, you can [install some common softwares locally][linux-locals.sh] (into
 ```bash
 $ dotfiles install neovim         # -> ~/.local/bin/nvim
 $ dotfiles install ripgrep        # -> ~/.local/bin/rg
+$ dotfiles install tmux           # -> ~/.local/bin/tmux
+$ dotfiles install delta          # -> ~/.local/bin/delta (git diff pager)
 ```
 
 
@@ -51,45 +48,35 @@ $ dotfiles install ripgrep        # -> ~/.local/bin/rg
       they will not be overwritten by default.
       In such cases you should delete these files *manually*.
 
-* If you are using [**neovim**][neovim] and seeing any startup errors (e.g. `no module named neovim`):
-    * Use **latest neovim** (e.g., neovim 0.7.0).
+* If you are using [**neovim**][neovim] and seeing any startup errors:
+    * Use **neovim 0.12.4 or newer**.
       To install/upgrade neovim on your system, you can run `dotfiles install neovim` (linux) or `brew install neovim` (mac).
     * Try `:checkhealth`.
-    * Try `:PlugUpdate`: some errors from vim plugin could be easily solved by running `:PlugUpdate` (in vim) or `$ dotfiles update`.
-    * We require python3 version not less than 3.4.  **Python 3.6+** is recommended (semshi: 3.5+)
-    * Make sure that the [`pynvim`](https://pypi.python.org/pypi/pynvim/) pypi package is installed on *local* python 3,
-      i.e. the python3 on conda, virtualenv, etc.
-      This should have been automatically installed.
-      If it doesn't work, check `which python3`. Use the following vim command to tell which host python is used:
-          [`:echo g:python3_host_prog`](https://github.com/wookayin/dotfiles/blob/master/nvim/init.vim).
-      * If you are not sure, manually running `python3 -m pip install --user pynvim` might help.
+    * Neovim plugins are managed by [lazy.nvim](https://github.com/folke/lazy.nvim), pinned to the versions in [`nvim/lazy-lock.json`](nvim/lazy-lock.json).
+      Run `:Lazy restore` (in neovim) or `$ dotfiles update` to install them.
+      To update plugins, run `:Lazy update` and commit `nvim/lazy-lock.json`.
+      (Vanilla vim uses vim-plug: `:PlugInstall`.)
+    * Python plugins need the [`pynvim`](https://pypi.python.org/pypi/pynvim/) package on the python3 that neovim uses
+      (`:echo g:python3_host_prog`): the python3 on `$PATH`, or the conda base python if only that has pynvim.
+      Set `$PYTHON3_HOST_PROG` to use another python.
+      * pynvim is installed with pip automatically when missing. If that fails (e.g. Debian/Ubuntu's python3 without pip),
+        install it yourself, e.g. `conda install pynvim` or `python3 -m pip install --user pynvim`.
 
-* [Powerline symbols](https://github.com/powerline/powerline#screenshots) are not displayed properly? Do you see some weird letters like `⍰` due to missing fonts?
-  Install [Powerline fonts](https://github.com/powerline/fonts) or
-  [Nerd fonts](https://github.com/ryanoasis/nerd-fonts).
-    * Mac users can do: manually install powerline fonts from https://github.com/powerline/fonts or `brew search nerd-font`
-      * Profiles > Open Profiles > Select Profile > Edit Profiles > Profiles > Text > change Font to [Noto Mono for Powerline]
-    * Ubuntu: Terminal > Preferences > change Font to ```Ubuntu Mono Regular```
-* Mouse drag selection and copy (right-click or `y` key) in tmux requires `xclip` on Linux: `sudo apt install xclip`
+* Icons or symbols (e.g. in the prompt, the tmux status bar, or neovim) are not displayed properly? Do you see some weird letters like `⍰`?
+  [Ghostty](https://ghostty.org) needs nothing extra: it has the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) symbols,
+  including the Powerline ones, built in. In other terminals, install a Nerd Font (e.g. `brew search nerd-font` on mac) and select it.
+* Copying in tmux (`y` in copy mode, or right-click after selecting with the mouse) sets the system clipboard via OSC52,
+  which works in terminals such as Ghostty, iTerm2 and kitty, even over SSH. On Linux desktops it also uses `xclip` if installed.
 * Does vim color look weird (e.g. only black-and-white)?
-  * Check whether your terminal emulator supports [24-bit color](https://github.com/wookayin/dotfiles/pull/9). Use iTerm2 or kitty rather than built-in Terminal.
-  * Mosh (1.3.x) does not support 24-bit colors yet.
+  * Check whether your terminal emulator supports 24-bit color (e.g. Ghostty, iTerm2, kitty).
+  * Mosh older than 1.4 does not support 24-bit colors.
   * Try `:set notermguicolors` to disable 24-bit colors.
-* Does tmux look weird? Make sure that tmux version is [2.3](etc/ubuntu-setup.sh) or higher.
+* Does tmux look weird? Make sure that tmux version is 3.7 or higher (`<C-a> ?`, searching key bindings, needs 3.7).
     * Run `$ dotfiles install tmux` to install `tmux` into `$HOME/.local/bin`, if you do not have sudo.
-* If you still have no idea or have found a bug, please feel free to contact me or raise an issue,
-  and I will happy to help you.
+* If you still have no idea or have found a bug, please feel free to raise an issue.
 
 
 [neovim]: https://github.com/neovim/neovim
-[dotfiles-update]: https://github.com/wookayin/dotfiles/blob/master/bin/dotfiles
-[linux-locals.sh]: https://github.com/wookayin/dotfiles/blob/master/etc/linux-locals.sh
-[install.py]: https://github.com/wookayin/dotfiles/blob/master/install.py
-
-
-License
--------
-
-[The MIT License (MIT)](LICENSE)
-
-Copyright (c) 2012-2022 Jongwook Choi (@wookayin)
+[dotfiles-update]: bin/dotfiles
+[linux-locals.sh]: etc/linux-locals.sh
+[install.py]: install.py
