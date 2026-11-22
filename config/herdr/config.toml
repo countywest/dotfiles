@@ -1,0 +1,6 @@
+onboarding = false
+
+[ui]
+# Alt-tab 복귀 시 herdr가 호스트 팔레트를 OSC 4로 재질의 -> 응답이 tmux를 거치며
+# 조각나서 raw_input 타임아웃 후 pane에 ";rgb:..." 로 새는 문제 회피.
+redraw_on_focus_gained = false

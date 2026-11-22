@@ -1,0 +1,5 @@
+font-family = "D2Coding"
+font-size = 14
+
+shell-integration-features = ssh-env,ssh-terminfo
+auto-update = off

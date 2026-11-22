@@ -70,6 +70,10 @@ tasks = {
     # kitty
     '~/.config/kitty/kitty.conf': 'config/kitty/kitty.conf',
 
+    # ghostty (terminal) and herdr
+    '~/.config/ghostty/config' : 'config/ghostty/config',
+    '~/.config/herdr/config.toml' : 'config/herdr/config.toml',
+
     # tmux
     '~/.tmux'      : 'tmux',
     '~/.tmux.conf' : 'tmux/tmux.conf',
