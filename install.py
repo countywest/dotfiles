@@ -389,6 +389,11 @@ for target, item in sorted(tasks.items()):
         log(RED("source %s : does not exist" % source))
         continue
 
+    # a regular file (e.g. the default ~/.bashrc of a new account) is moved aside to make the link
+    if os.path.isfile(target) and not os.path.islink(target) and not os.path.lexists(target + '.bak'):
+        os.rename(target, target + '.bak')
+        log("{:50s} : {}".format(BLUE(target), YELLOW("moved to %s.bak" % target)))
+
     # if --force option is given, delete and override the previous symlink
     if os.path.lexists(target):
         is_broken_link = os.path.islink(target) and not os.path.exists(os.readlink(target))
