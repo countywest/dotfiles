@@ -14,6 +14,13 @@ COLOR_WHITE="\033[1;37m"
 
 #---------------------------------------------------------------------------------------------------
 
+_private_tmpdir() {
+  # _private_tmpdir {name}: a fresh, private (0700) dir with an unpredictable name. A fixed
+  # /tmp/$USER/... path on a shared machine could be pre-created (e.g. as a symlink) by another
+  # user to swap the downloaded files before they are built or copied.
+  mktemp -d "${TMPDIR:-/tmp}/$1.XXXXXX"
+}
+
 _template_github_latest() {
   set -e
   local name="$1"
@@ -36,9 +43,7 @@ for asset in json.load(sys.stdin)['assets']:
   echo -e "${COLOR_YELLOW}download_url = ${COLOR_NONE}$download_url"
   test -n "$download_url"
 
-  # A fresh, private (0700) dir with an unpredictable name: a fixed /tmp/$USER/... path on a shared
-  # machine could be pre-created (e.g. as a symlink) by another user to swap files before we copy them.
-  local tmpdir; tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/$name.XXXXXX")
+  local tmpdir; tmpdir=$(_private_tmpdir "$name")
   local filename="$(basename "$download_url")"
   curl -fL -o "$tmpdir/$filename" "$download_url"
 
@@ -80,7 +85,7 @@ install_git() {
     )  # e.g. "v2.38.1"
     test  -n "$GIT_LATEST_VERSION"
 
-    local TMP_GIT_DIR="/tmp/$USER/git"; mkdir -p $TMP_GIT_DIR
+    local TMP_GIT_DIR; TMP_GIT_DIR=$(_private_tmpdir git)
     wget -N -O $TMP_GIT_DIR/git.tar.gz "https://github.com/git/git/archive/${GIT_LATEST_VERSION}.tar.gz"
     tar -xvzf $TMP_GIT_DIR/git.tar.gz -C $TMP_GIT_DIR --strip-components 1
 
@@ -113,10 +118,11 @@ install_gh() {
     local version="2.20.2"
     local url="https://github.com/cli/cli/releases/download/v$version/gh_${version}_linux_amd64.tar.gz"
 
-    local tmpdir="/tmp/$USER/gh"; mkdir -p $tmpdir
+    local tmpdir; tmpdir=$(_private_tmpdir gh)
 
     wget -N -O $tmpdir/gh.tar.gz "$url"
     tar -xvzf $tmpdir/gh.tar.gz -C $tmpdir --strip-components 1
+    mkdir -p $HOME/.local/bin
     mv $tmpdir/bin/gh $HOME/.local/bin/gh
 
     $HOME/.local/bin/gh --version
@@ -126,7 +132,7 @@ install_ncurses() {
     # installs ncurses (shared libraries and headers) into local namespaces.
     set -e
 
-    TMP_NCURSES_DIR="/tmp/$USER/ncurses/"; mkdir -p $TMP_NCURSES_DIR
+    TMP_NCURSES_DIR=$(_private_tmpdir ncurses)
     NCURSES_DOWNLOAD_URL="https://invisible-mirror.net/archives/ncurses/ncurses-6.5.tar.gz";
 
     wget -nc -O $TMP_NCURSES_DIR/ncurses-6.5.tar.gz $NCURSES_DOWNLOAD_URL
@@ -144,7 +150,7 @@ install_zsh() {
     set -e
 
     ZSH_VER="5.9.2"
-    TMP_ZSH_DIR="/tmp/$USER/zsh/"; mkdir -p $TMP_ZSH_DIR
+    TMP_ZSH_DIR=$(_private_tmpdir zsh)
 
     wget -nc -O $TMP_ZSH_DIR/zsh.tar.xz "https://sourceforge.net/projects/zsh/files/zsh/${ZSH_VER}/zsh-${ZSH_VER}.tar.xz/download"
     tar xvJf $TMP_ZSH_DIR/zsh.tar.xz -C $TMP_ZSH_DIR --strip-components 1
@@ -230,8 +236,7 @@ install_bazel() {
 
     BAZEL_URL="https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VER}/bazel-${BAZEL_VER}-installer-linux-x86_64.sh"
 
-    TMP_BAZEL_DIR="/tmp/$USER/bazel/"
-    mkdir -p $TMP_BAZEL_DIR
+    TMP_BAZEL_DIR=$(_private_tmpdir bazel)
     wget -O $TMP_BAZEL_DIR/bazel-installer.sh $BAZEL_URL
 
     # zsh completion
@@ -255,7 +260,7 @@ install_miniforge() {
     set -e
     local URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
 
-    local TMP_DIR="/tmp/$USER/miniforge/"; mkdir -p $TMP_DIR && cd ${TMP_DIR}
+    local TMP_DIR; TMP_DIR=$(_private_tmpdir miniforge) && cd "$TMP_DIR"
     wget -nc "$URL"
 
     local MINIFORGE_PREFIX="$HOME/miniforge3"
@@ -276,7 +281,7 @@ install_vim() {
     fi
 
     # grab the lastest vim tarball and build it
-    local TMP_VIM_DIR="/tmp/$USER/vim/"; mkdir -p $TMP_VIM_DIR
+    local TMP_VIM_DIR; TMP_VIM_DIR=$(_private_tmpdir vim)
     local VIM_LATEST_VERSION=$(\
         curl -L https://api.github.com/repos/vim/vim/tags 2>/dev/null | \
         python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["name"])'\
@@ -335,8 +340,7 @@ install_neovim() {
     sleep 1;  # allow users to read above comments
 
     local NVIM_ARCH=$(uname -m); [ "$NVIM_ARCH" = aarch64 ] && NVIM_ARCH=arm64   # asset names since v0.10.4
-    # a fresh private (0700) dir, not a fixed /tmp/$USER/... path (see _template_github_latest)
-    local TMP_NVIM_DIR; TMP_NVIM_DIR=$(mktemp -d "${TMPDIR:-/tmp}/neovim.XXXXXX")
+    local TMP_NVIM_DIR; TMP_NVIM_DIR=$(_private_tmpdir neovim)
     local NVIM_DOWNLOAD_URL="https://github.com/neovim/neovim/releases/download/${NEOVIM_VERSION}/nvim-linux-${NVIM_ARCH}.tar.gz"
 
     cd "$TMP_NVIM_DIR"
@@ -359,7 +363,7 @@ install_exa() {
     EXA_VERSION="0.10.1"
     EXA_BINARY_SHA1SUM="7bbd4be0bf44a0302970e7596f5753a0f31e85ac"
     EXA_DOWNLOAD_URL="https://github.com/ogham/exa/releases/download/v$EXA_VERSION/exa-linux-x86_64-v$EXA_VERSION.zip"
-    TMP_EXA_DIR="/tmp/$USER/exa/"
+    TMP_EXA_DIR=$(_private_tmpdir exa)
 
     wget -nc ${EXA_DOWNLOAD_URL} -P ${TMP_EXA_DIR} || exit 1;
     cd ${TMP_EXA_DIR} && unzip -o "exa-linux-x86_64-v$EXA_VERSION.zip" || exit 1;
@@ -435,7 +439,7 @@ install_go() {
     fi
 
     GO_DOWNLOAD_URL="https://dl.google.com/go/go1.9.3.linux-amd64.tar.gz"
-    TMP_GO_DIR="/tmp/$USER/go/"
+    TMP_GO_DIR=$(_private_tmpdir go)
 
     wget -nc ${GO_DOWNLOAD_URL} -P ${TMP_GO_DIR} || exit 1;
     cd ${TMP_GO_DIR} && tar -xvzf "go1.9.3.linux-amd64.tar.gz" || exit 1;
@@ -474,7 +478,7 @@ install_rsync() {
   set -e
 
   local URL="https://www.samba.org/ftp/rsync/src/rsync-3.5.0.tar.gz"
-  local TMP_DIR="/tmp/$USER/rsync"; mkdir -p $TMP_DIR
+  local TMP_DIR; TMP_DIR=$(_private_tmpdir rsync)
 
   wget -N -O $TMP_DIR/rsync.tar.gz "$URL"
   tar -xvzf $TMP_DIR/rsync.tar.gz -C $TMP_DIR --strip-components 1
@@ -487,8 +491,7 @@ install_rsync() {
 
 install_mosh() {
   set -e; set -x
-  mkdir -p /tmp/$USER && cd /tmp/$USER/
-  rm -rf mosh || true
+  cd "$(_private_tmpdir mosh)"
   git clone https://github.com/mobile-shell/mosh --depth=1
   cd mosh
 
@@ -513,8 +516,7 @@ install_mujoco() {
     return 1;
   fi
 
-  local tmpdir="/tmp/$USER/mujoco"
-  mkdir -p $tmpdir && cd $tmpdir
+  local tmpdir; tmpdir=$(_private_tmpdir mujoco) && cd "$tmpdir"
   mkdir -p $HOME/.mujoco
 
   local download_url="https://github.com/deepmind/mujoco/releases/download/${mujoco_version}/mujoco-${mujoco_version}-linux-x86_64.tar.gz"
