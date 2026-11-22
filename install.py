@@ -119,6 +119,25 @@ Please remove your local folder/file $f and try again.\033[0m"
     done
 ''']
 
+post_actions += [  # macOS
+    r'''#!/bin/bash
+    # macOS: install Homebrew (if missing) and the packages and apps in Brewfile
+    if ! type brew >/dev/null 2>&1; then
+        echo "Installing Homebrew (https://brew.sh) ..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || exit 1
+        type brew >/dev/null 2>&1 || { echo "Homebrew installation failed"; exit 1; }
+    fi
+    brew bundle check --no-upgrade --file=Brewfile || brew bundle install --no-upgrade --file=Brewfile || exit 1
+
+    # Karabiner-Elements: copied, not linked (it replaces a symlinked karabiner.json with a copy)
+    k=~/.config/karabiner/karabiner.json
+    if [ ! -f "$k" ]; then
+        mkdir -p ~/.config/karabiner && cp config/karabiner/karabiner.json "$k" && echo "Copied: $k"
+    elif ! cmp -s config/karabiner/karabiner.json "$k"; then
+        echo -e "\033[0;33m$k differs from config/karabiner/karabiner.json (left as is)\033[0m"
+    fi
+'''] if platform.system() == "Darwin" else []
+
 post_actions += [  # video2gif
     '''#!/bin/bash
     # Download command line scripts
@@ -203,23 +222,6 @@ post_actions += [  # install some essential packages (linux)
     fi
     '''
 ] if platform.system() == "Linux" else []
-
-post_actions += [  # macOS
-    '''#!/bin/bash
-    # macOS: homebrew installation
-
-    # Allow local installation (as a fallback)
-    PATH="$PATH:$HOME/.local/bin:$HOME/.homebrew/bin"
-    type brew || { echo "Homebrew not found. Install: https://brew.sh/" && exit 1; }
-
-    # Required by neovim (nvim-treesitter builds parsers with the tree-sitter CLI)
-    if ! type tree-sitter >/dev/null 2>&1; then
-        brew install tree-sitter-cli
-    else
-        tree-sitter --version
-    fi
-    '''
-] if platform.system() == "Darwin" else []
 
 post_actions += [  # neovim
     '''#!/bin/bash
