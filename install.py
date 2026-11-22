@@ -287,9 +287,11 @@ post_actions += [  # default shell
     # Change default shell to zsh
     /bin/zsh --version >/dev/null || (\
         echo -e "\033[0;31mError: /bin/zsh not found. Please install zsh.\033[0m"; exit 1)
-    if [[ ! "$SHELL" = *zsh ]]; then
+    login_shell=$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7)
+    if [[ ! "${login_shell:-$SHELL}" = *zsh ]]; then
         echo -e '\033[0;33mPlease type your password if you wish to change the default shell to ZSH\e[m'
-        chsh -s /bin/zsh && echo -e 'Successfully changed the default shell, please re-login'
+        { sudo -n chsh -s /bin/zsh "$(id -un)" 2>/dev/null || chsh -s /bin/zsh; } &&
+            echo -e 'Successfully changed the default shell, please re-login'
     else
         echo -e "\033[0;32m\$SHELL is already zsh.\033[0m $(zsh --version)"
     fi
