@@ -6,16 +6,43 @@ Dotfiles
 Installation
 ------------
 
+### Before installing
+
+`install.py` installs everything else, but expects these on the machine first:
+
+* **macOS**
+  * The Xcode Command Line Tools (`xcode-select --install`): `git`, `python3` and a C compiler (for the treesitter parsers).
+    Running `git` for the first time also offers to install them.
+  * An administrator account: Homebrew, which `install.py` installs if missing, and some apps (e.g. Karabiner-Elements) need `sudo`.
+* **Linux** (Ubuntu or Debian, tested on Ubuntu 22.04 and 24.04; x86_64 or aarch64)
+  * `git` and `python3` (Ubuntu ships `python3`; `sudo apt install git` if git is missing).
+  * `sudo`, to install zsh, curl, wget, build-essential, unzip and python3-venv with `apt`.
+    Without sudo, ask the administrator to install these packages; everything else goes into your home directory.
+  * Desktops: `fontconfig` (installed on desktops by default) for the D2Coding font. Ghostty itself is not installed by `install.py`.
+* Both: internet access, and a terminal to answer the prompts (your password for `sudo` and for changing the shell, and the git user name and email).
+
+### Install
+
 ```bash
 $ git clone --recursive https://github.com/countywest/dotfiles.git ~/.dotfiles
 $ cd ~/.dotfiles && python3 install.py
 ```
 
-<br>
+`install.py` sets up everything on a new machine, and skips what is already installed when run again:
 
+* Symbolic links (e.g., `~/.vimrc`) to the files in `~/.dotfiles`. An existing regular file is moved to `<file>.bak`;
+  an existing directory (e.g. `~/.vim`) is left alone, see Troubleshooting below.
+* macOS: [Homebrew](https://brew.sh) (if missing) and the packages and apps in [`Brewfile`](Brewfile), and the [Karabiner-Elements config](config/karabiner).
+* Linux: zsh, curl, wget, build-essential, unzip and python3-venv via `apt`,
+  then node, ripgrep, fd, bat, delta, tree-sitter, tmux 3.7+ and neovim into `~/.local/bin`, and the D2Coding font on desktops.
+* [Miniforge](https://github.com/conda-forge/miniforge) (conda) into `~/miniforge3`, with `pynvim` for neovim.
+* fzf (`~/.fzf`), the zsh, tmux and neovim plugins, zsh as the default shell, and the git user name and email (`~/.gitconfig.secret`).
 
-The installation script creates symbolic links (e.g., `~/.vimrc`) to the files in `~/.dotfiles`, and installs the zsh and (neo)vim plugins.
-If target files already exist (e.g. `~/.vim`, `~/.vimrc`), you will need to manually resolve the conflict (delete the old one or just ignore). See Troubleshooting below for details.
+### After installing (by hand)
+
+* macOS, Karabiner-Elements: on its first launch, allow its driver extension and Input Monitoring in System Settings,
+  and set the shortcut for switching the input source to F18 (right command, see [config/karabiner](config/karabiner)).
+* Linux desktops: install [Ghostty](https://ghostty.org/docs/install/binary) (its config and font are already in place).
 
 
 `$ dotfiles`
@@ -57,10 +84,8 @@ $ dotfiles install delta          # -> ~/.local/bin/delta (git diff pager)
       To update plugins, run `:Lazy update` and commit `nvim/lazy-lock.json`.
       (Vanilla vim uses vim-plug: `:PlugInstall`.)
     * Python plugins need the [`pynvim`](https://pypi.python.org/pypi/pynvim/) package on the python3 that neovim uses
-      (`:echo g:python3_host_prog`): the python3 on `$PATH`, or the conda base python if only that has pynvim.
-      Set `$PYTHON3_HOST_PROG` to use another python.
-      * pynvim is installed with pip automatically when missing. If that fails (e.g. Debian/Ubuntu's python3 without pip),
-        install it yourself, e.g. `conda install pynvim` or `python3 -m pip install --user pynvim`.
+      (`:echo g:python3_host_prog`): the python3 on `$PATH`, or the conda base python (`~/miniforge3`, where install.py puts pynvim)
+      if only that has pynvim. Set `$PYTHON3_HOST_PROG` to use another python.
 
 * Icons or symbols (e.g. in the prompt, the tmux status bar, or neovim) are not displayed properly? Do you see some weird letters like `⍰`?
   [Ghostty](https://ghostty.org) needs nothing extra: it has the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) symbols,
@@ -72,7 +97,7 @@ $ dotfiles install delta          # -> ~/.local/bin/delta (git diff pager)
   * Mosh older than 1.4 does not support 24-bit colors.
   * Try `:set notermguicolors` to disable 24-bit colors.
 * Does tmux look weird? Make sure that tmux version is 3.7 or higher (`<C-a> ?`, searching key bindings, needs 3.7).
-    * Run `$ dotfiles install tmux` to install `tmux` into `$HOME/.local/bin`, if you do not have sudo.
+    * On Linux, install.py installs tmux into `$HOME/.local/bin` if it is missing or older (or run `$ dotfiles install tmux`).
 * If you still have no idea or have found a bug, please feel free to raise an issue.
 
 
