@@ -201,6 +201,21 @@ post_actions += [  # install some essential packages (linux)
     ''',
 ] if platform.system() == "Linux" else []
 
+post_actions += [  # miniforge
+    r'''#!/bin/bash
+    # Install miniforge (conda) into ~/miniforge3, with pynvim in its base env (for neovim)
+    set -e
+    if [ ! -x ~/miniforge3/bin/conda ]; then
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fL -o "$tmp/miniforge.sh" \
+            "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+        bash "$tmp/miniforge.sh" -b -p ~/miniforge3
+    fi
+    ~/miniforge3/bin/conda --version
+    ~/miniforge3/bin/python3 -c 'import pynvim' 2>/dev/null || ~/miniforge3/bin/python3 -m pip install pynvim
+    ~/miniforge3/bin/python3 -c 'import pynvim; print("pynvim", pynvim.__version__)'
+''']
+
 post_actions += [  # video2gif
     '''#!/bin/bash
     # Download command line scripts
