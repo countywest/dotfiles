@@ -172,7 +172,7 @@ install_node() {
     # install some useful nodejs based utility (~/.local/lib/node_modules)
     $HOME/.local/bin/npm install -g yarn
     which yarn && yarn --version
-    $HOME/.local/bin/npm install -g http-server diff-so-fancy || true;
+    $HOME/.local/bin/npm install -g http-server || true;
 }
 
 install_tree-sitter() {
