@@ -197,9 +197,9 @@ install_tree-sitter() {
 
   set -x
   PATH="$PATH:$HOME/.local/bin" \
-    npm install -g tree-sitter-cli"@${TREESITTER_VERSION}"
+    npm install -g --prefix "$HOME/.local" tree-sitter-cli"@${TREESITTER_VERSION}"   # also with a system-wide npm
 
-  tree-sitter --version
+  "$HOME/.local/bin/tree-sitter" --version
 }
 
 install_tmux() {
@@ -427,6 +427,25 @@ install_delta() {
     mkdir -p "$PREFIX/bin"
     cp delta-*/delta "$PREFIX/bin"
     "$PREFIX/bin/delta" --version
+}
+install_d2coding() {
+    # D2Coding font (https://github.com/naver/d2codingfont/releases) into ~/.local/share/fonts
+    set -e
+    local download_url=$(\
+      curl -fsSL https://api.github.com/repos/naver/d2codingfont/releases/latest | \
+      python3 -c "import json, sys; print(next(a['browser_download_url'] for a in json.load(sys.stdin)['assets'] if a['name'].endswith('.zip')))")
+    echo -e "${COLOR_YELLOW}download_url = ${COLOR_NONE}$download_url"
+    test -n "$download_url"
+
+    local tmpdir; tmpdir=$(_private_tmpdir d2coding)
+    curl -fL -o "$tmpdir/d2coding.zip" "$download_url"
+    python3 -I -m zipfile -e "$tmpdir/d2coding.zip" "$tmpdir/fonts"
+
+    mkdir -p "$HOME/.local/share/fonts/D2Coding"
+    cp "$tmpdir"/fonts/D2Coding/*.ttc "$HOME/.local/share/fonts/D2Coding/"
+    fc-cache -f "$HOME/.local/share/fonts"
+    rm -rf "$tmpdir"
+    fc-list | grep -i d2coding
 }
 
 install_go() {

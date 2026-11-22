@@ -119,6 +119,35 @@ Please remove your local folder/file $f and try again.\033[0m"
     done
 ''']
 
+post_actions += [  # system packages (linux)
+    r'''#!/bin/bash
+    # Linux: install the system packages needed by the next steps and by neovim (apt, if missing)
+    missing=()
+    _need() { eval "$1" >/dev/null 2>&1 || missing+=("$2"); }
+    _need 'type zsh'  zsh
+    _need 'type curl' curl
+    _need 'type wget' wget
+    _need 'type make && type cc' build-essential        # nvim-treesitter compiles the parsers
+    _need 'type unzip' unzip                            # mason: LSP servers shipped as .zip
+    _need 'python3 -c "import ensurepip"' python3-venv  # mason: venvs for pip-based LSP servers
+    if [ ${#missing[@]} -eq 0 ]; then
+        echo "All installed: zsh, curl, wget, build-essential, unzip, python3-venv"; exit 0
+    fi
+    if ! type apt-get >/dev/null 2>&1; then
+        echo -e "\033[0;33mPlease install these packages yourself: ${missing[*]}\033[0m"; exit 1
+    fi
+    if [ "$(id -u)" = 0 ]; then
+        sudo=""
+    elif type sudo >/dev/null 2>&1 && { sudo -n true 2>/dev/null || id -nG | grep -qwE 'sudo|admin|wheel'; }; then
+        sudo="sudo"
+    else
+        echo -e "\033[0;33mNo sudo: ask the administrator to install ${missing[*]}\033[0m"
+        type zsh >/dev/null 2>&1 || bin/dotfiles install zsh   # zsh can be built into ~/.local
+        exit 1
+    fi
+    $sudo apt-get update && $sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
+'''] if platform.system() == "Linux" else []
+
 post_actions += [  # macOS
     r'''#!/bin/bash
     # macOS: install Homebrew (if missing) and the packages and apps in Brewfile
@@ -137,6 +166,40 @@ post_actions += [  # macOS
         echo -e "\033[0;33m$k differs from config/karabiner/karabiner.json (left as is)\033[0m"
     fi
 '''] if platform.system() == "Darwin" else []
+
+post_actions += [  # install some essential packages (linux)
+    r'''#!/bin/bash
+    # Install node, rg, fd, bat, delta and tree-sitter locally, if missing
+    # (Debian's batcat and fdfind do not count: zsh/zsh.d/envs.zsh looks for bat and fd)
+    ret=0
+    type node  >/dev/null 2>&1 || bin/dotfiles install node    || ret=1
+    type rg    >/dev/null 2>&1 || bin/dotfiles install ripgrep || ret=1
+    type fd    >/dev/null 2>&1 || bin/dotfiles install fd      || ret=1
+    type bat   >/dev/null 2>&1 || bin/dotfiles install bat     || ret=1
+    type delta >/dev/null 2>&1 || bin/dotfiles install delta   || ret=1
+
+    # Required by neovim: nvim-treesitter builds parsers with `tree-sitter build` (tree-sitter CLI 0.25+;
+    # e.g. Ubuntu 24.04's apt package is 0.20, too old)
+    ts_ver=$(tree-sitter --version 2>/dev/null | cut -d' ' -f2)
+    if [ "$(printf '%s\n' 0.25.0 "${ts_ver:-0}" | sort -V | head -n1)" != 0.25.0 ]; then
+        bin/dotfiles install tree-sitter || ret=1
+    else
+        echo "tree-sitter $ts_ver"
+    fi
+    exit $ret
+    ''',
+
+    '''#!/bin/bash
+    # Install the D2Coding font (the terminal font, see config/ghostty/config) on desktops
+    if ! type fc-list >/dev/null 2>&1; then
+        echo "fontconfig not found (not a desktop), skipped"
+    elif fc-list | grep -qi d2coding; then
+        echo "D2Coding is installed."
+    else
+        bin/dotfiles install d2coding
+    fi
+    ''',
+] if platform.system() == "Linux" else []
 
 post_actions += [  # video2gif
     '''#!/bin/bash
@@ -206,22 +269,6 @@ post_actions += [  # default shell
         echo -e "\033[0;32m\$SHELL is already zsh.\033[0m $(zsh --version)"
     fi
 ''']
-
-post_actions += [  # install some essential packages (linux)
-    '''#!/bin/bash
-    # Install node, rg, fd locally
-    type node >/dev/null 2>&1 || bin/dotfiles install node
-    type rg   >/dev/null 2>&1 || bin/dotfiles install ripgrep
-    type fd   >/dev/null 2>&1 || bin/dotfiles install fd
-
-    # Required by neovim (nvim-treesitter builds parsers with the tree-sitter CLI)
-    if ! type tree-sitter >/dev/null 2>&1; then
-        bin/dotfiles install tree-sitter
-    else
-        tree-sitter --version
-    fi
-    '''
-] if platform.system() == "Linux" else []
 
 post_actions += [  # neovim
     '''#!/bin/bash
