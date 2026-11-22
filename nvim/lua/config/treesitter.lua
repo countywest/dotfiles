@@ -297,6 +297,18 @@ function M.ensure_parsers_installed(langs)
   end
 end
 
+--- Install M.parsers_to_install and block until they are built (e.g. in a headless install.py run).
+--- Exiting while parsers are still being built leaves half-written parser directories behind,
+--- which fail the next start with ENOTEMPTY. Parsers already being installed asynchronously
+--- (by setup) are waited for, not installed twice.
+---@param timeout_ms? integer
+function M.install_parsers_sync(timeout_ms)
+  if not pcall(require, "nvim-treesitter") or not M.is_v1() then
+    return
+  end
+  require("nvim-treesitter").install(M.parsers_to_install):wait(timeout_ms or 5 * 60 * 1000)
+end
+
 local _recover_requested = false
 
 function M.try_recover_parser_errors(lang, err)

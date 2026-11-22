@@ -228,9 +228,11 @@ post_actions += [  # neovim
 post_actions += [  # neovim plugins (lazy.nvim); vanilla vim uses vim-plug via :PlugInstall
     {'update'  : '''# vim plugins: install, and check out the versions in nvim/lazy-lock.json
         # (to update plugins: `:Lazy update` in nvim, then commit nvim/lazy-lock.json)
+        # and wait for the treesitter parsers to be built (exiting earlier leaves broken parser dirs)
         PATH="$PATH:$HOME/.local/bin" \
         nvim --headless \
             -c "lua require('lazy').restore { wait = true }" \
+            -c "lua require('config.treesitter').install_parsers_sync()" \
             -c "lua require('config.plugins').report_errors { exit = true }"
         ''',
      'none'    : '# vim plugins: skipped',
