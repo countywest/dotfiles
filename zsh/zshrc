@@ -155,7 +155,10 @@ if [ ! $? -eq 0 ] ; then   # error, refresh the script and try again
     source $ANTIDOTE_BUNDLE
 fi
 
-fast-theme "~/.config/fsh/wook.ini" -q
+# F-Sy-H keeps the applied theme (in ~/.cache/f-sy-h), so apply it again only when wook.ini changes
+if (( $+functions[fsh_theme] )) && [[ ! ${XDG_CACHE_HOME:-$HOME/.cache}/f-sy-h/current_theme.ini -nt ~/.config/fsh/wook.ini ]]; then
+  fsh_theme ~/.config/fsh/wook.ini -q
+fi
 
 # }}} ===================
 
