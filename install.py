@@ -228,14 +228,16 @@ post_actions += [  # fzf
 
 post_actions += [  # video2gif
     '''#!/bin/bash
-    # Download command line scripts
+    # Download command line scripts (if missing)
     mkdir -p "$HOME/.local/bin/"
     _download() {
-        curl -L "$2" > "$1" && chmod +x "$1"
+        [ -x "$1" ] && echo "$1 exists" && return
+        curl -fL "$2" > "$1" && chmod +x "$1"
     }
     ret=0
     set -v
-    _download "$HOME/.local/bin/video2gif" "https://raw.githubusercontent.com/wookayin/video2gif/master/video2gif" || ret=1
+    # pinned to a commit: an executable put on $PATH should not change with a branch
+    _download "$HOME/.local/bin/video2gif" "https://raw.githubusercontent.com/wookayin/video2gif/f6299b19e6d357602f73177c69be08d70395c3dd/video2gif" || ret=1
     exit $ret;
 ''']
 
