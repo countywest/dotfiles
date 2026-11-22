@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Usage:
-# curl -fsSL https://dotfiles.wook.kr/etc/install | bash
+# curl -fsSL https://raw.githubusercontent.com/countywest/dotfiles/master/etc/install | bash
 
 cat <<EOF
    @wookayin's              ███████╗██╗██╗     ███████╗███████╗
@@ -21,7 +21,7 @@ if _version_check "$(git --version | cut -d' ' -f3)" "2.8"; then
     GIT_FLAGS="-j8"
 fi
 
-GIT_REPO="https://github.com/wookayin/dotfiles.git"
+GIT_REPO="https://github.com/countywest/dotfiles.git"
 
 if which python3 > /dev/null; then
     PYTHON="python3"
@@ -37,6 +37,8 @@ set -e
 cd ~
 
 git clone --recursive ${GIT_FLAGS} ${GIT_REPO} ~/.dotfiles
-cd ~/.dotfiles && $PYTHON install.py
+cd ~/.dotfiles
+# stdin is this script (curl | bash), so install.py would read its prompts (passwords, git user) from it
+if { true < /dev/tty; } 2>/dev/null; then $PYTHON install.py < /dev/tty; else $PYTHON install.py; fi
 
 echo "All Done!"
