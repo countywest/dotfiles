@@ -197,18 +197,19 @@ install_tree-sitter() {
 }
 
 install_tmux() {
-    # tmux: a static build (no libevent/ncurses needed); tmux-appimage stops at 3.5a
-    # see https://github.com/mjakob-gh/build-static-tmux
+    # tmux: the official static builds (no libevent/ncurses needed), for x86_64 and arm64
+    # see https://github.com/tmux/tmux-builds/releases
     # tmux before 3.4 counts VS16 emoji (e.g. ✖️) as one cell while most
     # terminals draw them as two, which leaves stray characters on screen.
     set -e
-    TMUX_VER="3.7b"
+    TMUX_VER="3.8"
+    local arch; arch=$(_linux_arch); [[ "$arch" == aarch64 ]] && arch=arm64
 
-    TMUX_URL="https://github.com/mjakob-gh/build-static-tmux/releases/download/v${TMUX_VER}/tmux.linux-amd64.stripped.gz"
+    TMUX_URL="https://github.com/tmux/tmux-builds/releases/download/v${TMUX_VER}/tmux-${TMUX_VER}-linux-${arch}.tar.gz"
     # Download aside and rename: a running tmux keeps its file busy,
     # so writing over it in place fails with "Text file busy".
     mkdir -p $HOME/.local/bin
-    wget -O - $TMUX_URL | gunzip > $HOME/.local/bin/tmux.download
+    wget -O - $TMUX_URL | tar -xzO tmux > $HOME/.local/bin/tmux.download
     chmod +x $HOME/.local/bin/tmux.download
     mv -f $HOME/.local/bin/tmux.download $HOME/.local/bin/tmux
 
