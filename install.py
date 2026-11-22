@@ -187,7 +187,6 @@ post_actions += [  # default shell
 post_actions += [  # install some essential packages (linux)
     '''#!/bin/bash
     # Install node, rg, fd locally
-    export PATH="$PATH:$HOME/.local/bin"
     type node >/dev/null 2>&1 || bin/dotfiles install node
     type rg   >/dev/null 2>&1 || bin/dotfiles install ripgrep
     type fd   >/dev/null 2>&1 || bin/dotfiles install fd
@@ -221,7 +220,6 @@ post_actions += [  # macOS
 post_actions += [  # neovim
     '''#!/bin/bash
     # check the neovim version (offers a local install on Linux if missing or outdated)
-    PATH="$PATH:$HOME/.local/bin"
     bash "etc/install-neovim.sh"
 ''']
 
@@ -229,7 +227,6 @@ post_actions += [  # neovim plugins (lazy.nvim); vanilla vim uses vim-plug via :
     {'update'  : '''# vim plugins: install, and check out the versions in nvim/lazy-lock.json
         # (to update plugins: `:Lazy update` in nvim, then commit nvim/lazy-lock.json)
         # and wait for the treesitter parsers to be built (exiting earlier leaves broken parser dirs)
-        PATH="$PATH:$HOME/.local/bin" \
         nvim --headless \
             -c "lua require('lazy').restore { wait = true }" \
             -c "lua require('config.treesitter').install_parsers_sync()" \
@@ -422,6 +419,11 @@ for target, item in sorted(tasks.items()):
             BLUE(target),
             GREEN("symlink created from '%s'" % source)
         ))
+
+# What a step installs (Homebrew, ~/.local/bin) must be found by the later steps,
+# before a new shell would put it on $PATH (see zsh/zshenv)
+os.environ['PATH'] = os.pathsep.join(
+    [os.path.expanduser('~/.local/bin'), os.environ.get('PATH', ''), '/opt/homebrew/bin', '/usr/local/bin'])
 
 errors = []
 for action in post_actions:
