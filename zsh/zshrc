@@ -139,8 +139,10 @@ function _antidote_compile_bundles() {
   printf "%s\n" $bundles | antidote bundle >! "$ANTIDOTE_BUNDLE"
 }
 
-# If $ANTIDOTE_BUNDLE is empty (blank) file, refresh the static cache
-if [ ! -s "$ANTIDOTE_BUNDLE" ] || ! grep -q '[^[:space:]]' < "$ANTIDOTE_BUNDLE"; then
+# Refresh the static cache if it is empty (blank) or older than this file, so that a bundle added to
+# or removed from the list above takes effect on the next shell (also after a plain `git pull`)
+if [ ! -s "$ANTIDOTE_BUNDLE" ] || ! grep -q '[^[:space:]]' < "$ANTIDOTE_BUNDLE" \
+    || [[ ${ZDOTDIR:-$HOME}/.zshrc -nt $ANTIDOTE_BUNDLE ]]; then
   _antidote_compile_bundles
 fi
 
