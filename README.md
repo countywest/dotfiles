@@ -86,6 +86,10 @@ $ dotfiles install delta          # -> ~/.local/bin/delta (git diff pager)
     * Python plugins need the [`pynvim`](https://pypi.python.org/pypi/pynvim/) package on the python3 that neovim uses
       (`:echo g:python3_host_prog`): the python3 on `$PATH`, or the conda base python (`~/miniforge3`, where install.py puts pynvim)
       if only that has pynvim. Set `$PYTHON3_HOST_PROG` to use another python.
+    * LSP servers are installed and started when a file of their language is opened, except those that would run code
+      from the project: pyrefly (the project's `.venv` python) and rust-analyzer (cargo build scripts and proc macros).
+      Start them with `:lsp enable pyrefly` or `:lsp enable rust_analyzer` in projects you trust.
+      ts_ls uses its own bundled TypeScript, not the project's, and lua_ls asks before loading a project's plugin.
 
 * Icons or symbols (e.g. in the prompt, the tmux status bar, or neovim) are not displayed properly? Do you see some weird letters like `⍰`?
   [Ghostty](https://ghostty.org) needs nothing extra: it has the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) symbols,

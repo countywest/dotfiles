@@ -141,14 +141,19 @@ local auto_lsp_servers = {
   ['copilot'] = false, -- do not automatically enable copilot; attach to buffers w/ opt-in
   ['basedpyright'] = true,
   ['ruff'] = true, -- Note: ruff_lsp is deprecated, :MasonUninstall ruff-lsp
-  ['pyrefly'] = true,
+  -- pyrefly runs the python of the project (its .venv, or what its pyproject.toml names) when a file
+  -- is opened, i.e. code from any repo; basedpyright already type-checks. `:lsp enable pyrefly` to use it.
+  ['pyrefly'] = false,
   ['vimls'] = true,
   ['lua_ls'] = true,
   ['bashls'] = true,
   ['ts_ls'] = true,
   ['cssls'] = true,
   ['clangd'] = true,
-  ['rust_analyzer'] = true,
+  -- rust-analyzer runs cargo, which builds and runs the project's build scripts and proc macros (and
+  -- a rust-toolchain.toml can point cargo to binaries in the repo): `:lsp enable rust_analyzer` (after
+  -- `:MasonInstall rust-analyzer`) in projects you trust.
+  ['rust_analyzer'] = false,
   ['gopls'] = true,  -- go lang
   ['texlab'] = true,
   ['yamlls'] = true,
