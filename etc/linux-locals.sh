@@ -161,11 +161,26 @@ install_zsh() {
 }
 
 install_node() {
-    # Install node.js LTS at ~/.local
+    # Node.js, the latest LTS: the official build from nodejs.org, checked against its SHASUMS256.txt
     set -e
-    curl -fsSL https://install-node.vercel.app/lts | bash -s -- --prefix=$HOME/.local --verbose --yes
+    local arch; arch=$(_linux_arch); [ "$arch" = x86_64 ] && arch=x64 || arch=arm64
+    local version; version=$(curl -fsSL https://nodejs.org/dist/index.json | \
+      python3 -c "import json, sys; print(next(v['version'] for v in json.load(sys.stdin) if v['lts']))")
+    local name="node-${version}-linux-${arch}"
+    echo -e "${COLOR_YELLOW}Installing node ${version} ...${COLOR_NONE}"
+    if ! /sbin/ldconfig -p | grep -q 'libatomic\.so\.1'; then   # the official builds link it (build-essential has it)
+        echo -e "${COLOR_RED}node needs libatomic.so.1: e.g. sudo apt install libatomic1${COLOR_NONE}"; exit 1
+    fi
 
-    echo -e "\n$(which node) : $(node --version)"
+    local tmpdir; tmpdir=$(_private_tmpdir node)
+    curl -fL -o "$tmpdir/$name.tar.gz" "https://nodejs.org/dist/${version}/$name.tar.gz"
+    curl -fsSL "https://nodejs.org/dist/${version}/SHASUMS256.txt" | grep "  $name.tar.gz\$" > "$tmpdir/SHASUMS256.txt"
+    (cd "$tmpdir" && sha256sum -c SHASUMS256.txt)
+    mkdir -p "$PREFIX"
+    tar -xzf "$tmpdir/$name.tar.gz" -C "$PREFIX" --strip-components 1 \
+        --exclude="$name/"{CHANGELOG.md,LICENSE,README.md}
+    rm -rf "$tmpdir"
+    export PATH="$PREFIX/bin:$PATH"   # npm runs node via /usr/bin/env
     node --version
 
     # install some useful nodejs based utility (~/.local/lib/node_modules)
