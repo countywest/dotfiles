@@ -29,10 +29,10 @@ if (( $+commands[htop] )); then
 fi
 
 # list
-if command -v exa 2>&1 >/dev/null; then
-    # exa is our friend :)
-    alias ls='exa'
-    alias l='exa --long --group --git'
+if command -v eza 2>&1 >/dev/null; then
+    # eza (the maintained fork of exa) is our friend :)
+    alias ls='eza'
+    alias l='eza --long --group --git'
 else
     # fallback to normal ls
     alias l='ls'

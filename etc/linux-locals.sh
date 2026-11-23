@@ -112,20 +112,13 @@ install_git() {
 }
 
 install_gh() {
-    # github CLI: https://github.com/cli/cli/releases
+    # GitHub CLI, the latest release (https://github.com/cli/cli/releases)
     set -e
-
-    local version="2.20.2"
-    local url="https://github.com/cli/cli/releases/download/v$version/gh_${version}_linux_amd64.tar.gz"
-
-    local tmpdir; tmpdir=$(_private_tmpdir gh)
-
-    wget -N -O $tmpdir/gh.tar.gz "$url"
-    tar -xvzf $tmpdir/gh.tar.gz -C $tmpdir --strip-components 1
-    mkdir -p $HOME/.local/bin
-    mv $tmpdir/bin/gh $HOME/.local/bin/gh
-
-    $HOME/.local/bin/gh --version
+    local arch; arch=$(_linux_arch); [ "$arch" = x86_64 ] && arch=amd64 || arch=arm64
+    _template_github_latest "gh" "cli/cli" "gh_*_linux_${arch}.tar.gz"
+    mkdir -p "$PREFIX/bin"
+    cp gh_*/bin/gh "$PREFIX/bin/gh"
+    "$PREFIX/bin/gh" --version
 }
 
 install_ncurses() {
@@ -358,22 +351,14 @@ install_neovim() {
     $PREFIX/bin/nvim --version
 }
 
-install_exa() {
-    # https://github.com/ogham/exa/releases
-    EXA_VERSION="0.10.1"
-    EXA_BINARY_SHA1SUM="7bbd4be0bf44a0302970e7596f5753a0f31e85ac"
-    EXA_DOWNLOAD_URL="https://github.com/ogham/exa/releases/download/v$EXA_VERSION/exa-linux-x86_64-v$EXA_VERSION.zip"
-    TMP_EXA_DIR=$(_private_tmpdir exa)
-
-    wget -nc ${EXA_DOWNLOAD_URL} -P ${TMP_EXA_DIR} || exit 1;
-    cd ${TMP_EXA_DIR} && unzip -o "exa-linux-x86_64-v$EXA_VERSION.zip" || exit 1;
-    if [[ "$EXA_BINARY_SHA1SUM" != "$(sha1sum bin/exa | cut -d' ' -f1)" ]]; then
-        echo -e "${COLOR_RED}SHA1 checksum mismatch, aborting!${COLOR_NONE}"
-        exit 1;
-    fi
-    cp "bin/exa" "$PREFIX/bin/exa" || exit 1;
-    cp "completions/exa.zsh" "$PREFIX/share/zsh/site-functions/_exa" || exit 1;
-    echo "$(which exa) : $(exa --version)"
+install_eza() {
+    # eza, the maintained fork of exa (https://github.com/eza-community/eza/releases)
+    set -e
+    local arch; arch=$(_linux_arch)
+    _template_github_latest "eza" "eza-community/eza" "eza_${arch}-unknown-linux-gnu.tar.gz"
+    mkdir -p "$PREFIX/bin"
+    cp ./eza "$PREFIX/bin/eza"
+    "$PREFIX/bin/eza" --version
 }
 
 install_fd() {
@@ -398,14 +383,6 @@ install_ripgrep() {
     "$PREFIX/bin/rg" --version
 }
 
-install_xsv() {
-    XSV_VERSION="0.13.0"
-
-    set -e; set -x
-    mkdir -p $PREFIX/bin && cd $PREFIX/bin
-    curl -L "https://github.com/BurntSushi/xsv/releases/download/${XSV_VERSION}/xsv-${XSV_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar zxf -
-    $PREFIX/bin/xsv
-}
 
 install_bat() {
     # https://github.com/sharkdp/bat/releases
@@ -431,7 +408,7 @@ install_delta() {
 install_d2coding() {
     # D2Coding font (https://github.com/naver/d2codingfont/releases) into ~/.local/share/fonts
     set -e
-    local download_url=$(\
+    local download_url; download_url=$(\
       curl -fsSL https://api.github.com/repos/naver/d2codingfont/releases/latest | \
       python3 -c "import json, sys; print(next(a['browser_download_url'] for a in json.load(sys.stdin)['assets'] if a['name'].endswith('.zip')))")
     echo -e "${COLOR_YELLOW}download_url = ${COLOR_NONE}$download_url"
@@ -449,22 +426,27 @@ install_d2coding() {
 }
 
 install_go() {
-    # install go lang into ~/.go
-    # https://golang.org/dl/
+    # Go, the latest release (https://go.dev/dl/), checked against its published SHA-256, into ~/.go
     set -e
     if [[ -d $HOME/.go ]]; then
-        echo -e "${COLOR_RED}Error: $HOME/.go already exists.${COLOR_NONE}"
+        echo -e "${COLOR_RED}Error: $HOME/.go already exists (remove it to reinstall).${COLOR_NONE}"
         exit 1;
     fi
+    local arch; arch=$(_linux_arch); [ "$arch" = x86_64 ] && arch=amd64 || arch=arm64
+    local file sha
+    read -r file sha < <(curl -fsSL 'https://go.dev/dl/?mode=json' | python3 -c "
+import json, sys
+f = next(f for f in json.load(sys.stdin)[0]['files'] if (f['os'], f['arch'], f['kind']) == ('linux', '$arch', 'archive'))
+print(f['filename'], f['sha256'])")
+    test -n "$sha"
 
-    GO_DOWNLOAD_URL="https://dl.google.com/go/go1.9.3.linux-amd64.tar.gz"
-    TMP_GO_DIR=$(_private_tmpdir go)
+    local tmpdir; tmpdir=$(_private_tmpdir go)
+    curl -fL -o "$tmpdir/$file" "https://go.dev/dl/$file"
+    echo "$sha  $tmpdir/$file" | sha256sum -c -
+    tar -xzf "$tmpdir/$file" -C "$tmpdir"
+    mv "$tmpdir/go" "$HOME/.go"
+    rm -rf "$tmpdir"
 
-    wget -nc ${GO_DOWNLOAD_URL} -P ${TMP_GO_DIR} || exit 1;
-    cd ${TMP_GO_DIR} && tar -xvzf "go1.9.3.linux-amd64.tar.gz" || exit 1;
-    mv go $HOME/.go
-
-    echo ""
     echo -e "${COLOR_GREEN}Installed at $HOME/.go${COLOR_NONE}"
     $HOME/.go/bin/go version
 }

@@ -70,10 +70,12 @@ fi
 path=( $path $HOME/.cargo/bin )
 # }}}
 
-# GO {{{
-export GOROOT=$HOME/.go
-export GOPATH=$GOROOT/packages
-path=( $path $GOROOT/bin $GOPATH/bin )
+# GO {{{ (`dotfiles install go` puts it in ~/.go; a GOROOT set without it breaks any other go)
+if [[ -d $HOME/.go ]]; then
+  export GOROOT=$HOME/.go
+  export GOPATH=$GOROOT/packages
+  path=( $path $GOROOT/bin $GOPATH/bin )
+fi
 # }}}
 
 # Bazel {{{
