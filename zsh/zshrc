@@ -64,7 +64,7 @@ if [[ -f "$HOME/.nvm/nvm.sh" ]]; then
   }
 fi
 
-# Additional zplug from ~/.zshrc.local
+# Machine-local settings from ~/.zshrc.local
 if [[ -s "${ZDOTDIR:-$HOME}/.zshrc.local" ]]; then
   source "${ZDOTDIR:-$HOME}/.zshrc.local"
 fi
