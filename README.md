@@ -16,7 +16,7 @@ Installation
   * An administrator account: Homebrew, which `install.py` installs if missing, and some apps (e.g. Karabiner-Elements) need `sudo`.
 * **Linux** (Ubuntu or Debian, tested on Ubuntu 22.04 and 24.04; x86_64 or aarch64)
   * `git` and `python3` (Ubuntu ships `python3`; `sudo apt install git` if git is missing).
-  * `sudo`, to install zsh, curl, wget, build-essential, unzip and python3-venv with `apt`.
+  * `sudo`, to install zsh, curl, wget, build-essential, unzip, python3-venv and htop with `apt`.
     Without sudo, ask the administrator to install these packages; everything else goes into your home directory.
   * Desktops: `fontconfig` (installed on desktops by default) for the D2Coding font. Ghostty itself is not installed by `install.py`.
 * Both: internet access, and a terminal to answer the prompts (your password for `sudo` and for changing the shell, and the git user name and email).
@@ -33,7 +33,7 @@ $ cd ~/.dotfiles && python3 install.py
 * Symbolic links (e.g., `~/.vimrc`) to the files in `~/.dotfiles`. An existing regular file is moved to `<file>.bak`;
   an existing directory (e.g. `~/.vim`) is left alone, see Troubleshooting below.
 * macOS: [Homebrew](https://brew.sh) (if missing) and the packages and apps in [`Brewfile`](Brewfile), and the [Karabiner-Elements config](config/karabiner).
-* Linux: zsh, curl, wget, build-essential, unzip and python3-venv via `apt`,
+* Linux: zsh, curl, wget, build-essential, unzip, python3-venv and htop via `apt`,
   then node, ripgrep, fd, bat, delta, tree-sitter, tmux 3.7+ and neovim into `~/.local/bin`, and the D2Coding font on desktops.
 * [Miniforge](https://github.com/conda-forge/miniforge) (conda) into `~/miniforge3`, with `pynvim` for neovim.
 * fzf (`~/.fzf`), the zsh, tmux and neovim plugins, zsh as the default shell, and the git user name and email (`~/.gitconfig.secret`).

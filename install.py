@@ -130,8 +130,9 @@ post_actions += [  # system packages (linux)
     _need 'type make && type cc' build-essential        # nvim-treesitter compiles the parsers
     _need 'type unzip' unzip                            # mason: LSP servers shipped as .zip
     _need 'python3 -c "import ensurepip"' python3-venv  # mason: venvs for pip-based LSP servers
+    _need 'type htop' htop                              # `top` runs htop, see zsh/zsh.d/alias.zsh
     if [ ${#missing[@]} -eq 0 ]; then
-        echo "All installed: zsh, curl, wget, build-essential, unzip, python3-venv"; exit 0
+        echo "All installed: zsh, curl, wget, build-essential, unzip, python3-venv, htop"; exit 0
     fi
     if ! type apt-get >/dev/null 2>&1; then
         echo -e "\033[0;33mPlease install these packages yourself: ${missing[*]}\033[0m"; exit 1
